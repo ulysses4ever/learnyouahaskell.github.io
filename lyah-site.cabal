@@ -10,6 +10,7 @@ executable site
   main-is:          site.hs
   build-depends:    base >= 4 && < 5
                   , hakyll >= 4.16 && < 4.17
+                  , pandoc
                   , pandoc-types
                   , filepath
                   , containers

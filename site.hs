@@ -6,6 +6,8 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Text.Pandoc.Definition
 import Text.Pandoc.Walk (query)
+import Text.Pandoc.Class (runIO)
+import Text.Pandoc.Readers.Markdown (readMarkdown)
 import Control.Monad (forM_)
 import System.FilePath ((</>))
 
@@ -109,9 +111,15 @@ buildChapterList = preprocess $ do
     getChapterData ident = do
         let fname = toFilePath ident
         meta <- loadMetadata ident
+        let order = fromMaybe (error $ "Missing chapter ID in metadata for: " ++ fname) $ lookupInt "chapter" meta
+        
+        -- Extract title from Pandoc AST
         content <- readFile fname
-        let order = fromMaybe 999 $ lookupInt "chapter" meta  -- Default to 999 if no metadata
-            title = extractTitleFromContent content
+        pandoc <- runIO $ readMarkdown defaultHakyllReaderOptions (T.pack content)
+        title <- case pandoc of
+            Right (Pandoc _ blocks) -> return $ extractFirstHeading blocks
+            Left err -> error $ "Failed to parse " ++ fname ++ ": " ++ show err
+        
         return (fname, order, title)
     
     isFaqOrHelper :: FilePath -> Bool
@@ -122,14 +130,24 @@ buildChapterList = preprocess $ do
           | needle `isPrefixOf` haystack = True
           | otherwise = isInfixOf needle xs
 
--- Extract title from markdown content
-extractTitleFromContent :: String -> String
-extractTitleFromContent content =
-    let lns = dropWhile (\l -> l == "---" || null l) $ lines content
-        titleLine = fromMaybe "" $ find (isPrefixOf "# ") lns
-        title = drop 2 titleLine
-        cleanTitle = T.unpack $ T.strip $ T.pack $ takeWhile (/= '{') title
-    in cleanTitle
+-- Extract first heading from Pandoc blocks
+extractFirstHeading :: [Block] -> String
+extractFirstHeading blocks = 
+    case find isHeader blocks of
+        Just (Header _ _ inlines) -> inlineToString inlines
+        _ -> ""
+  where
+    isHeader (Header 1 _ _) = True
+    isHeader _ = False
+    
+    inlineToString :: [Inline] -> String
+    inlineToString = query getString
+    
+    getString :: Inline -> String
+    getString (Str s) = T.unpack s
+    getString Space = " "
+    getString (Code _ s) = T.unpack s
+    getString _ = ""
 
 -- Extract TOC from Pandoc document using Pandoc's AST
 extractTOCFromPandoc :: String -> Pandoc -> [String]
