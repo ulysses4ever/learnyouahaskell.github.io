@@ -5,7 +5,4 @@ let
 in
 pkgs.haskellPackages.shellFor {
   packages = p: [ myPackage ];
-  buildInputs = with pkgs; [
-    haskellPackages.cabal-install
-  ];
 }
