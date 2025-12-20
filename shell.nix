@@ -1,11 +1,16 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  lyah-site = pkgs.haskellPackages.callCabal2nix "lyah-site" ./. {};
+  haskellEnv = pkgs.haskellPackages.ghcWithPackages (ps: with ps; [
+    hakyll
+    pandoc
+    pandoc-types
+    text
+    directory
+  ]);
 in
 pkgs.mkShell {
   buildInputs = [
-    lyah-site
-    pkgs.cabal-install
+    haskellEnv
   ];
 }
