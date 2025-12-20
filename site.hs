@@ -17,7 +17,7 @@ zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
 zipPrevNext xs = zip3 (Nothing : map Just xs) xs (map Just (tail xs) ++ [Nothing])
 
 main :: IO ()
-main = hakyllWith config $ do
+main = hakyll $ do
     -- Copy static assets managed by Hakyll
     let copyDocs pat = match pat $ do
             route $ gsubRoute "static/" (const "")
@@ -118,13 +118,7 @@ main = hakyllWith config $ do
                          defaultContext)
                 >>= postProcessImages
 
-config :: Configuration
-config = defaultConfiguration
-    { destinationDirectory = "_site"
-    , storeDirectory = "_hakyll_cache"
-    , tmpDirectory = "_hakyll_tmp"
-    , providerDirectory = "."
-    }
+
 
 -- Build list of chapters sorted by chapter number from YAML metadata
 buildChapterList :: Rules [(FilePath, Int, String)]
