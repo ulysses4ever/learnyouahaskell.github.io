@@ -55,14 +55,11 @@ Nix provides pre-compiled binary packages for all dependencies, which significan
 # Enter the Nix shell (installs all dependencies)
 nix-shell
 
-# Compile the site generator
-ghc --make site.hs -o site
-
-# Build the site
-./site build
+# Build the site (compiles and runs in one step)
+runhaskell site.hs build
 
 # Preview the site locally (optional)
-./site watch
+runhaskell site.hs watch
 # Then visit http://localhost:8000
 ```
 
