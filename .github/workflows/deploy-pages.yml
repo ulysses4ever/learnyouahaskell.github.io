@@ -22,7 +22,8 @@ jobs:
         env:
           NIXPKGS_ALLOW_UNFREE: 1
         run: |
-          nix-shell --run "cabal run site -- build"
+          nix-shell --run "ghc --make site.hs -o site"
+          ./site build
       
       - name: Upload artifact
         if: github.ref == 'refs/heads/main'
