@@ -19,6 +19,8 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       
       - name: Build site with Nix
+        env:
+          NIXPKGS_ALLOW_UNFREE: 1
         run: |
           nix-shell --run "cabal run site -- build"
       
