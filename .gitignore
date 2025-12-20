@@ -4,6 +4,7 @@ docs/*.html
 .DS_Store
 
 # Hakyll
+_site/
 _hakyll_cache/
 _hakyll_tmp/
 dist/
