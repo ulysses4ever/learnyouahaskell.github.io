@@ -42,7 +42,7 @@ main = hakyllWith config $ do
                 
                 pandocCompiler
                     >>= loadAndApplyTemplate "markdown/config/template.html" 
-                            (chapterContext title title prevFile prevTitle nextFile nextTitle)
+                            (chapterContext title prevFile prevTitle nextFile nextTitle)
                     >>= postProcessImages
     
     -- Generate chapters.html (TOC)
@@ -132,10 +132,9 @@ extractSubsections fname content =
                    else Nothing
 
 -- Context for chapter pages  
-chapterContext :: String -> String -> FilePath -> String -> FilePath -> String -> Context String
-chapterContext pageTitle title prevFile prevTitle nextFile nextTitle =
-    constField "title" pageTitle <>
-    constField "pagetitle" title <>
+chapterContext :: String -> FilePath -> String -> FilePath -> String -> Context String
+chapterContext title prevFile prevTitle nextFile nextTitle =
+    constField "title" title <>
     constField "footdiv" "true" <>
     constField "prev_filename" prevFile <>
     constField "prev_title" prevTitle <>
