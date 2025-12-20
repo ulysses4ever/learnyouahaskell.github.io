@@ -12,25 +12,17 @@ import System.FilePath (takeBaseName)
 main :: IO ()
 main = hakyllWith config $ do
     -- Copy static assets managed by Hakyll
-    match "docs/assets/**" $ do
-        route $ gsubRoute "docs/" (const "")
-        compile copyFileCompiler
-    
-    match "docs/sh/**" $ do
-        route $ gsubRoute "docs/" (const "")
-        compile copyFileCompiler
-    
-    match "docs/index.html" $ do
-        route $ gsubRoute "docs/" (const "")
-        compile copyFileCompiler
-    
-    match "docs/robots.txt" $ do
-        route $ gsubRoute "docs/" (const "")
-        compile copyFileCompiler
-    
-    match "docs/sitemap.xml" $ do
-        route $ gsubRoute "docs/" (const "")
-        compile copyFileCompiler
+    let copyDocs pat = match pat $ do
+            route $ gsubRoute "docs/" (const "")
+            compile copyFileCompiler
+
+    mapM_ copyDocs
+        [ "docs/assets/**"
+        , "docs/sh/**"
+        , "docs/index.html"
+        , "docs/robots.txt"
+        , "docs/sitemap.xml"
+        ]
     
     -- Template
     match "markdown/config/template.html" $ compile templateBodyCompiler
