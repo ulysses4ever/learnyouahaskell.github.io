@@ -7,7 +7,7 @@ import qualified Data.Text as T
 import Text.Pandoc.Definition
 import Text.Pandoc.Walk (query)
 import Control.Monad (forM_)
-import System.FilePath (takeBaseName, (</>))
+import System.FilePath ((</>))
 
 -- Helper function to pair each element with its previous and next elements
 zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
@@ -38,10 +38,10 @@ main = hakyllWith config $ do
     let chapterTriples = zipPrevNext chapterFiles
     forM_ chapterTriples $ \(mprev, (fname, idx, title), mnext) -> do
         match (fromGlob $ "source_md" </> fname) $ do
-            route $ customRoute $ \_ -> takeBaseName fname ++ ".html"
+            route $ setExtension "html"
             compile $ do
-                let (prevFile, prevTitle) = maybe ("", "") (\(f, _, t) -> (takeBaseName f, t)) mprev
-                    (nextFile, nextTitle) = maybe ("", "") (\(f, _, t) -> (takeBaseName f, t)) mnext
+                let (prevFile, prevTitle) = maybe ("", "") (\(f, _, t) -> (toFilePath $ setExtension "html" $ fromFilePath f, t)) mprev
+                    (nextFile, nextTitle) = maybe ("", "") (\(f, _, t) -> (toFilePath $ setExtension "html" $ fromFilePath f, t)) mnext
                 
                 pandocCompiler
                     >>= loadAndApplyTemplate "config/template.html" 
@@ -57,14 +57,14 @@ main = hakyllWith config $ do
             
             -- Build TOC from all chapters using Pandoc to extract headings
             tocLines <- forM chapterFiles $ \(fname, idx, title) -> do
-                let basename = takeBaseName fname
+                let htmlName = toFilePath $ setExtension "html" $ fromFilePath fname
                     sp = if idx >= 10 then " " else "  "
-                    chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ basename ++ ".html)"
+                    chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ htmlName ++ ")"
                 
                 -- Load chapter markdown, parse with Pandoc, extract subsections
                 item <- load (fromFilePath $ "source_md/" ++ fname)
                 pandoc <- readPandocWith defaultHakyllReaderOptions item
-                let subsections = extractTOCFromPandoc basename (itemBody pandoc)
+                let subsections = extractTOCFromPandoc htmlName (itemBody pandoc)
                 
                 return $ chapterLine : subsections
             
@@ -80,7 +80,7 @@ main = hakyllWith config $ do
     
     -- Generate faq.html
     match "source_md/faq.md" $ do
-        route $ constRoute "faq.html"
+        route $ setExtension "html"
         compile $ do
             pandocCompiler
                 >>= loadAndApplyTemplate "config/template.html"
@@ -133,9 +133,9 @@ extractTitleFromContent content =
 
 -- Extract TOC from Pandoc document using Pandoc's AST
 extractTOCFromPandoc :: String -> Pandoc -> [String]
-extractTOCFromPandoc basename (Pandoc _ blocks) =
+extractTOCFromPandoc htmlName (Pandoc _ blocks) =
     let headers = query getHeader blocks
-    in mapMaybe (makeLink basename) headers
+    in mapMaybe (makeLink htmlName) headers
   where
     getHeader :: Block -> [(Int, String, String)]
     getHeader (Header level (anchor, _, _) inlines) =
@@ -152,8 +152,8 @@ extractTOCFromPandoc basename (Pandoc _ blocks) =
     getString _ = ""
     
     makeLink :: String -> (Int, String, String) -> Maybe String
-    makeLink base (level, anchor, title)
-        | level == 2 = Just $ "    * [" ++ title ++ "](" ++ base ++ ".html#" ++ anchor ++ ")"
+    makeLink htmlName (level, anchor, title)
+        | level == 2 = Just $ "    * [" ++ title ++ "](" ++ htmlName ++ "#" ++ anchor ++ ")"
         | otherwise = Nothing
 
 -- Context for chapter pages  
