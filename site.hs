@@ -41,10 +41,7 @@ main = hakyll $ do
     let chapterTriples = zipPrevNext chapterFiles
     forM_ chapterTriples $ \(mprev, (fname, idx, title), mnext) -> do
         match (fromGlob $ "source_md" </> fname) $ do
-            route $ customRoute $ \ident -> 
-                let path = toFilePath ident
-                    basename = takeBaseName path
-                in basename ++ ".html"
+            route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
             compile $ do
                 let ctx = case (mprev, mnext) of
                         (Nothing, Nothing) -> 
@@ -109,7 +106,7 @@ main = hakyll $ do
     
     -- Generate faq.html
     match "source_md/faq.md" $ do
-        route $ customRoute $ const "faq.html"
+        route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
         compile $ do
             pandocCompiler
                 >>= loadAndApplyTemplate "config/template.html"
