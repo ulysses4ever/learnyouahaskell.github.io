@@ -15,5 +15,6 @@ executable site
                   , filepath
                   , containers
                   , text
+                  , directory
   ghc-options:      -threaded
   default-language: Haskell2010

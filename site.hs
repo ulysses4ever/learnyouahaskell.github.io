@@ -8,8 +8,9 @@ import Text.Pandoc.Definition
 import Text.Pandoc.Walk (query)
 import Text.Pandoc.Class (runIO)
 import Text.Pandoc.Readers.Markdown (readMarkdown)
-import Control.Monad (forM_)
-import System.FilePath ((</>))
+import System.Directory (listDirectory)
+import Control.Monad (forM_, forM)
+import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
 
 -- Helper function to pair each element with its previous and next elements
 zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
@@ -40,14 +41,39 @@ main = hakyllWith config $ do
     let chapterTriples = zipPrevNext chapterFiles
     forM_ chapterTriples $ \(mprev, (fname, idx, title), mnext) -> do
         match (fromGlob $ "source_md" </> fname) $ do
-            route $ setExtension "html"
+            route $ customRoute $ \ident -> 
+                let path = toFilePath ident
+                    basename = takeBaseName path
+                in basename ++ ".html"
             compile $ do
-                let (prevFile, prevTitle) = maybe ("", "") (\(f, _, t) -> (toFilePath $ setExtension "html" $ fromFilePath f, t)) mprev
-                    (nextFile, nextTitle) = maybe ("", "") (\(f, _, t) -> (toFilePath $ setExtension "html" $ fromFilePath f, t)) mnext
+                let ctx = case (mprev, mnext) of
+                        (Nothing, Nothing) -> 
+                            constField "title" title <> 
+                            constField "footdiv" "true" <>
+                            defaultContext
+                        (Nothing, Just (nf, _, nt)) ->
+                            constField "title" title <>
+                            constField "footdiv" "true" <>
+                            constField "next_filename" (replaceExtension nf ".html") <>
+                            constField "next_title" nt <>
+                            defaultContext
+                        (Just (pf, _, pt), Nothing) ->
+                            constField "title" title <>
+                            constField "footdiv" "true" <>
+                            constField "prev_filename" (replaceExtension pf ".html") <>
+                            constField "prev_title" pt <>
+                            defaultContext
+                        (Just (pf, _, pt), Just (nf, _, nt)) ->
+                            constField "title" title <>
+                            constField "footdiv" "true" <>
+                            constField "prev_filename" (replaceExtension pf ".html") <>
+                            constField "prev_title" pt <>
+                            constField "next_filename" (replaceExtension nf ".html") <>
+                            constField "next_title" nt <>
+                            defaultContext
                 
                 pandocCompiler
-                    >>= loadAndApplyTemplate "config/template.html" 
-                            (chapterContext title prevFile prevTitle nextFile nextTitle)
+                    >>= loadAndApplyTemplate "config/template.html" ctx
                     >>= postProcessImages
     
     -- Generate chapters.html (TOC)
@@ -59,12 +85,12 @@ main = hakyllWith config $ do
             
             -- Build TOC from all chapters using Pandoc to extract headings
             tocLines <- forM chapterFiles $ \(fname, idx, title) -> do
-                let htmlName = toFilePath $ setExtension "html" $ fromFilePath fname
+                let htmlName = replaceExtension fname ".html"
                     sp = if idx >= 10 then " " else "  "
                     chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ htmlName ++ ")"
                 
                 -- Load chapter markdown, parse with Pandoc, extract subsections
-                item <- load (fromFilePath $ "source_md/" ++ fname)
+                item <- load (fromFilePath $ "source_md" </> fname)
                 pandoc <- readPandocWith defaultHakyllReaderOptions item
                 let subsections = extractTOCFromPandoc htmlName (itemBody pandoc)
                 
@@ -73,16 +99,17 @@ main = hakyllWith config $ do
             let tocContent = unlines $ concat tocLines
                 fullContent = headContent ++ "\n" ++ tocContent ++ "\n" ++ footContent
             
-            makeItem fullContent
-                >>= renderPandoc
-                >>= loadAndApplyTemplate "config/template.html"
-                        (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
-                         defaultContext)
-                >>= postProcessChaptersList
+            item <- makeItem fullContent
+            pandoc <- readPandocWith defaultHakyllReaderOptions item
+            let html = writePandocWith defaultHakyllWriterOptions pandoc
+            loadAndApplyTemplate "config/template.html"
+                    (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
+                     defaultContext)
+                html
     
     -- Generate faq.html
     match "source_md/faq.md" $ do
-        route $ setExtension "html"
+        route $ customRoute $ const "faq.html"
         compile $ do
             pandocCompiler
                 >>= loadAndApplyTemplate "config/template.html"
@@ -102,25 +129,44 @@ config = defaultConfiguration
 -- Build list of chapters sorted by chapter number from YAML metadata
 buildChapterList :: Rules [(FilePath, Int, String)]
 buildChapterList = preprocess $ do
-    let pattern = "source_md/*.md"
-    ids <- getMatches (fromGlob pattern)
-    chapters <- mapM getChapterData $ filter (not . isFaqOrHelper . toFilePath) ids
+    files <- listDirectory "source_md"
+    let mdFiles = filter (\f -> takeExtension f == ".md") files
+        chapterFiles = filter (not . isFaqOrHelper) mdFiles
+    chapters <- mapM getChapterData chapterFiles
     return $ sortOn (\(_, idx, _) -> idx) chapters
   where
-    getChapterData :: Identifier -> IO (FilePath, Int, String)
-    getChapterData ident = do
-        let fname = toFilePath ident
-        meta <- loadMetadata ident
-        let order = fromMaybe (error $ "Missing chapter ID in metadata for: " ++ fname) $ lookupInt "chapter" meta
+    getChapterData :: FilePath -> IO (FilePath, Int, String)
+    getChapterData fname = do
+        let fullPath = "source_md" </> fname
+        content <- readFile fullPath
+        
+        -- Extract chapter number from YAML frontmatter
+        let order = extractChapterNumber fullPath content
         
         -- Extract title from Pandoc AST
-        content <- readFile fname
         pandoc <- runIO $ readMarkdown defaultHakyllReaderOptions (T.pack content)
         title <- case pandoc of
             Right (Pandoc _ blocks) -> return $ extractFirstHeading blocks
-            Left err -> error $ "Failed to parse " ++ fname ++ ": " ++ show err
+            Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
         
+        -- Return just the filename, not the full path
         return (fname, order, title)
+    
+    extractChapterNumber :: FilePath -> String -> Int
+    extractChapterNumber fname content =
+        case lines content of
+            [] -> error $ "Empty file: " ++ fname
+            ("---":rest) -> parseYamlChapter fname rest
+            _ -> error $ "No YAML frontmatter found in: " ++ fname
+      where
+        parseYamlChapter fname [] = error $ "YAML frontmatter not closed in: " ++ fname
+        parseYamlChapter fname ("---":_) = error $ "No chapter field in YAML in: " ++ fname
+        parseYamlChapter fname (line:rest)
+            | "chapter:" `isPrefixOf` line =
+                case reads (dropWhile (== ' ') $ drop 8 line) of
+                    [(n, "")] -> n
+                    _ -> error $ "Invalid chapter number in " ++ fname ++ ": " ++ line
+            | otherwise = parseYamlChapter fname rest
     
     isFaqOrHelper :: FilePath -> Bool
     isFaqOrHelper fname = any (`isInfixOf` fname) ["faq.md", "chapters_head.md", "chapters_foot.md"]
@@ -157,7 +203,7 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) =
   where
     getHeader :: Block -> [(Int, String, String)]
     getHeader (Header level (anchor, _, _) inlines) =
-        [(level, anchor, inlineToString inlines)]
+        [(level, T.unpack anchor, inlineToString inlines)]
     getHeader _ = []
     
     inlineToString :: [Inline] -> String
@@ -173,17 +219,6 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) =
     makeLink htmlName (level, anchor, title)
         | level == 2 = Just $ "    * [" ++ title ++ "](" ++ htmlName ++ "#" ++ anchor ++ ")"
         | otherwise = Nothing
-
--- Context for chapter pages  
-chapterContext :: String -> FilePath -> String -> FilePath -> String -> Context String
-chapterContext title prevFile prevTitle nextFile nextTitle =
-    constField "title" title <>
-    constField "footdiv" "true" <>
-    constField "prev_filename" prevFile <>
-    constField "prev_title" prevTitle <>
-    constField "next_filename" nextFile <>
-    constField "next_title" nextTitle <>
-    defaultContext
 
 -- Post-process images
 postProcessImages :: Item String -> Compiler (Item String)
@@ -220,11 +255,3 @@ postProcessChaptersList item = return $ fmap addChaptersClass item
             | otherwise = case hstk of
                 (x:xs) -> go ndl xs (x:acc)
                 [] -> (reverse acc, [])
-
--- Helper to look up integer from metadata
-lookupInt :: String -> Metadata -> Maybe Int
-lookupInt key meta = case lookupString key meta of
-    Just s -> case reads s of
-        [(n, "")] -> Just n
-        _ -> Nothing
-    Nothing -> Nothing
