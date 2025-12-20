@@ -1,10 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 import Hakyll
-import Data.List (isPrefixOf, find, isSuffixOf)
+import Data.List (isPrefixOf, find)
 import Data.Maybe (fromMaybe)
 import qualified Data.Map as M
 import Data.Char (isSpace)
 import Control.Monad (forM_)
+
+-- Helper functions
+trimSpaces :: String -> String
+trimSpaces = reverse . dropWhile isSpace . reverse . dropWhile isSpace
+
+breakOn :: Eq a => [a] -> [a] -> ([a], [a])
+breakOn needle haystack = go needle haystack []
+  where
+    go ndl [] acc = (reverse acc, [])
+    go ndl hstk acc
+        | ndl `isPrefixOf` hstk = (reverse acc, hstk)
+        | otherwise = case hstk of
+            (x:xs) -> go ndl xs (x:acc)
+            [] -> (reverse acc, [])
 
 main :: IO ()
 main = hakyllWith config $ do
@@ -25,25 +39,30 @@ main = hakyllWith config $ do
         match (fromGlob $ "markdown/source_md/" ++ fname ++ ".md") $ do
             route $ constRoute $ fname ++ ".html"
             compile $ do
-                let Just (idx, title) = M.lookup fname chapterMap
-                    total = length chapterFiles
-                    
-                    (prevFile, prevTitle) = if idx > 1
-                        then let pf = chapterFiles !! (idx - 2)
-                                 Just (_, pt) = M.lookup pf chapterMap
-                             in (pf, pt)
-                        else ("", "")
-                    
-                    (nextFile, nextTitle) = if idx < total
-                        then let nf = chapterFiles !! idx
-                                 Just (_, nt) = M.lookup nf chapterMap
-                             in (nf, nt)
-                        else ("", "")
-                
-                pandocCompiler
-                    >>= loadAndApplyTemplate "markdown/config/template.html" 
-                            (chapterContext title prevFile prevTitle nextFile nextTitle)
-                    >>= postProcessImages
+                let maybeChapter = M.lookup fname chapterMap
+                case maybeChapter of
+                    Nothing -> error $ "Chapter not found: " ++ fname
+                    Just (idx, title) -> do
+                        let total = length chapterFiles
+                            
+                            (prevFile, prevTitle) = if idx > 1
+                                then let pf = chapterFiles !! (idx - 2)
+                                     in case M.lookup pf chapterMap of
+                                         Just (_, pt) -> (pf, pt)
+                                         Nothing -> ("", "")
+                                else ("", "")
+                            
+                            (nextFile, nextTitle) = if idx < total
+                                then let nf = chapterFiles !! idx
+                                     in case M.lookup nf chapterMap of
+                                         Just (_, nt) -> (nf, nt)
+                                         Nothing -> ("", "")
+                                else ("", "")
+                        
+                        pandocCompiler
+                            >>= loadAndApplyTemplate "markdown/config/template.html" 
+                                    (chapterContext title prevFile prevTitle nextFile nextTitle)
+                            >>= postProcessImages
     
     -- Generate chapters.html (TOC)
     tocEntries <- preprocess $ mapM (extractTocForFile chapterFiles chapterMap) (zip [1..] chapterFiles)
@@ -87,16 +106,16 @@ extractTitle fname = do
     content <- readFile ("markdown/source_md/" ++ fname ++ ".md")
     let titleLine = fromMaybe "" $ find (isPrefixOf "# ") $ lines content
         title = drop 2 titleLine  -- Remove "# "
-        cleanTitle = trim $ takeWhile (/= '{') title  -- Remove {#anchor} if present
+        cleanTitle = trimSpaces $ takeWhile (/= '{') title  -- Remove {#anchor} if present
     return cleanTitle
-  where
-    trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
 
 -- Extract TOC entries for a file (chapter + subsections)
 extractTocForFile :: [FilePath] -> M.Map FilePath (Int, String) -> (Int, FilePath) -> IO [String]
 extractTocForFile allFiles chapterMap (num, fname) = do
     content <- readFile ("markdown/source_md/" ++ fname ++ ".md")
-    let Just (_, title) = M.lookup fname chapterMap
+    let title = case M.lookup fname chapterMap of
+                    Just (_, t) -> t
+                    Nothing -> ""
         sp = if num >= 10 then " " else "  "
         chapterLine = show num ++ "." ++ sp ++ "[" ++ title ++ "](" ++ fname ++ ".html)"
         
@@ -111,16 +130,15 @@ extractSubsections fname content =
     let lns = lines content
         subsecLines = filter (isPrefixOf "## ") lns
         makeLink line = 
-            let titleRaw = trim $ drop 3 line
+            let titleRaw = trimSpaces $ drop 3 line
                 title = takeWhile (/= '{') titleRaw
                 anchor = extractAnchor line
             in case anchor of
-                Just anch -> "    * [" ++ trim title ++ "](" ++ fname ++ ".html#" ++ anch ++ ")"
+                Just anch -> "    * [" ++ trimSpaces title ++ "](" ++ fname ++ ".html#" ++ anch ++ ")"
                 Nothing -> ""
         links = map makeLink subsecLines
     in filter (not . null) links
   where
-    trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
     -- Extract anchor from {#anchor} syntax
     extractAnchor line =
         case break (== '{') line of
@@ -154,12 +172,6 @@ postProcessImages item = return $ fmap processHtml item
         case breakOn old str of
             (before, "") -> before
             (before, rest) -> before ++ new ++ replace old new (drop (length old) rest)
-    breakOn needle haystack = go needle haystack []
-      where
-        go ndl [] acc = (reverse acc, [])
-        go ndl hstk acc
-            | ndl `isPrefixOf` hstk = (reverse acc, hstk)
-            | otherwise = go ndl (tail hstk) (head hstk : acc)
 
 -- Post-process chapters list (add class to ol)
 postProcessChaptersList :: Item String -> Compiler (Item String)
@@ -170,9 +182,3 @@ postProcessChaptersList item = return $ fmap addChaptersClass item
         case breakOn old str of
             (before, "") -> before
             (before, rest) -> before ++ new ++ drop (length old) rest
-    breakOn needle haystack = go needle haystack []
-      where
-        go ndl [] acc = (reverse acc, [])
-        go ndl hstk acc
-            | ndl `isPrefixOf` hstk = (reverse acc, hstk)
-            | otherwise = go ndl (tail hstk) (head hstk : acc)
