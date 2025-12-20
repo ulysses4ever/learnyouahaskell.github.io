@@ -7,7 +7,11 @@ import qualified Data.Text as T
 import Text.Pandoc.Definition
 import Text.Pandoc.Walk (query)
 import Control.Monad (forM_)
-import System.FilePath (takeBaseName)
+import System.FilePath (takeBaseName, (</>))
+
+-- Helper function to pair each element with its previous and next elements
+zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
+zipPrevNext xs = zip3 (Nothing : map Just xs) xs (map Just (tail xs) ++ [Nothing])
 
 main :: IO ()
 main = hakyllWith config $ do
@@ -31,22 +35,13 @@ main = hakyllWith config $ do
     chapterFiles <- buildChapterList
     
     -- Process chapter markdown files
-    forM_ chapterFiles $ \(fname, idx, title) -> do
-        match (fromGlob $ "markdown/source_md/" ++ fname) $ do
+    let chapterTriples = zipPrevNext chapterFiles
+    forM_ chapterTriples $ \(mprev, (fname, idx, title), mnext) -> do
+        match (fromGlob $ "markdown/source_md" </> fname) $ do
             route $ customRoute $ \_ -> takeBaseName fname ++ ".html"
             compile $ do
-                let total = length chapterFiles
-                    
-                    prevChapter = listToMaybe [(f, t) | (f, i, t) <- chapterFiles, i == idx - 1]
-                    nextChapter = listToMaybe [(f, t) | (f, i, t) <- chapterFiles, i == idx + 1]
-                    
-                    (prevFile, prevTitle) = case prevChapter of
-                        Just (f, t) -> (takeBaseName f, t)
-                        Nothing -> ("", "")
-                    
-                    (nextFile, nextTitle) = case nextChapter of
-                        Just (f, t) -> (takeBaseName f, t)
-                        Nothing -> ("", "")
+                let (prevFile, prevTitle) = maybe ("", "") (\(f, _, t) -> (takeBaseName f, t)) mprev
+                    (nextFile, nextTitle) = maybe ("", "") (\(f, _, t) -> (takeBaseName f, t)) mnext
                 
                 pandocCompiler
                     >>= loadAndApplyTemplate "markdown/config/template.html" 
