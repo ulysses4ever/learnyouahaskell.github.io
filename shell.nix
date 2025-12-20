@@ -1,7 +1,11 @@
 { pkgs ? import <nixpkgs> {} }:
 
+let
+  lyah-site = pkgs.haskellPackages.callCabal2nix "lyah-site" ./. {};
+in
 pkgs.mkShell {
   buildInputs = [
-    (pkgs.haskellPackages.callCabal2nix "lyah-site" ./. {})
+    lyah-site
+    pkgs.cabal-install
   ];
 }
