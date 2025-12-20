@@ -99,13 +99,13 @@ main = hakyllWith config $ do
             let tocContent = unlines $ concat tocLines
                 fullContent = headContent ++ "\n" ++ tocContent ++ "\n" ++ footContent
             
-            item <- makeItem fullContent
-            pandoc <- readPandocWith defaultHakyllReaderOptions item
-            let html = writePandocWith defaultHakyllWriterOptions pandoc
-            loadAndApplyTemplate "config/template.html"
-                    (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
-                     defaultContext)
-                html
+            -- Use pandocCompiler to convert markdown to HTML
+            makeItem fullContent
+                >>= renderPandoc
+                >>= loadAndApplyTemplate "config/template.html"
+                        (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
+                         defaultContext)
+                >>= postProcessChaptersList
     
     -- Generate faq.html
     match "source_md/faq.md" $ do
