@@ -4,8 +4,6 @@
 
 all: site
 	./site build
-	# Copy generated files from _site/ to docs/ for GitHub Pages
-	rsync -av --delete --exclude=.git _site/ docs/
 
 site: site.hs lyah-site.cabal
 	cabal build
@@ -18,8 +16,6 @@ clean:
 
 rebuild: clean site
 	./site rebuild
-	# Copy generated files from _site/ to docs/ for GitHub Pages
-	rsync -av --delete --exclude=.git _site/ docs/
 
 watch: site
 	./site watch

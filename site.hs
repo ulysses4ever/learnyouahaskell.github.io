@@ -17,19 +17,19 @@ main :: IO ()
 main = hakyllWith config $ do
     -- Copy static assets managed by Hakyll
     let copyDocs pat = match pat $ do
-            route $ gsubRoute "docs/" (const "")
+            route $ gsubRoute "static/" (const "")
             compile copyFileCompiler
 
     mapM_ copyDocs
-        [ "docs/assets/**"
-        , "docs/sh/**"
-        , "docs/index.html"
-        , "docs/robots.txt"
-        , "docs/sitemap.xml"
+        [ "static/assets/**"
+        , "static/sh/**"
+        , "static/index.html"
+        , "static/robots.txt"
+        , "static/sitemap.xml"
         ]
     
     -- Template
-    match "markdown/config/template.html" $ compile templateBodyCompiler
+    match "config/template.html" $ compile templateBodyCompiler
     
     -- Collect all chapters with their metadata
     chapterFiles <- buildChapterList
@@ -37,14 +37,14 @@ main = hakyllWith config $ do
     -- Process chapter markdown files
     let chapterTriples = zipPrevNext chapterFiles
     forM_ chapterTriples $ \(mprev, (fname, idx, title), mnext) -> do
-        match (fromGlob $ "markdown/source_md" </> fname) $ do
+        match (fromGlob $ "source_md" </> fname) $ do
             route $ customRoute $ \_ -> takeBaseName fname ++ ".html"
             compile $ do
                 let (prevFile, prevTitle) = maybe ("", "") (\(f, _, t) -> (takeBaseName f, t)) mprev
                     (nextFile, nextTitle) = maybe ("", "") (\(f, _, t) -> (takeBaseName f, t)) mnext
                 
                 pandocCompiler
-                    >>= loadAndApplyTemplate "markdown/config/template.html" 
+                    >>= loadAndApplyTemplate "config/template.html" 
                             (chapterContext title prevFile prevTitle nextFile nextTitle)
                     >>= postProcessImages
     
@@ -52,8 +52,8 @@ main = hakyllWith config $ do
     create ["chapters.html"] $ do
         route idRoute
         compile $ do
-            headContent <- unsafeCompiler $ readFile "markdown/source_md/chapters_head.md"
-            footContent <- unsafeCompiler $ readFile "markdown/source_md/chapters_foot.md"
+            headContent <- unsafeCompiler $ readFile "source_md/chapters_head.md"
+            footContent <- unsafeCompiler $ readFile "source_md/chapters_foot.md"
             
             -- Build TOC from all chapters using Pandoc to extract headings
             tocLines <- forM chapterFiles $ \(fname, idx, title) -> do
@@ -62,7 +62,7 @@ main = hakyllWith config $ do
                     chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ basename ++ ".html)"
                 
                 -- Load chapter markdown, parse with Pandoc, extract subsections
-                item <- load (fromFilePath $ "markdown/source_md/" ++ fname)
+                item <- load (fromFilePath $ "source_md/" ++ fname)
                 pandoc <- readPandocWith defaultHakyllReaderOptions item
                 let subsections = extractTOCFromPandoc basename (itemBody pandoc)
                 
@@ -73,17 +73,17 @@ main = hakyllWith config $ do
             
             makeItem fullContent
                 >>= renderPandoc
-                >>= loadAndApplyTemplate "markdown/config/template.html"
+                >>= loadAndApplyTemplate "config/template.html"
                         (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
                          defaultContext)
                 >>= postProcessChaptersList
     
     -- Generate faq.html
-    match "markdown/source_md/faq.md" $ do
+    match "source_md/faq.md" $ do
         route $ constRoute "faq.html"
         compile $ do
             pandocCompiler
-                >>= loadAndApplyTemplate "markdown/config/template.html"
+                >>= loadAndApplyTemplate "config/template.html"
                         (constField "title" "FAQ - Learn You a Haskell for Great Good!" <>
                          constField "faq" "true" <>
                          defaultContext)
@@ -100,7 +100,7 @@ config = defaultConfiguration
 -- Build list of chapters sorted by chapter number from YAML metadata
 buildChapterList :: Rules [(FilePath, Int, String)]
 buildChapterList = preprocess $ do
-    let pattern = "markdown/source_md/*.md"
+    let pattern = "source_md/*.md"
     ids <- getMatches (fromGlob pattern)
     chapters <- mapM getChapterData $ filter (not . isFaqOrHelper . toFilePath) ids
     return $ sortOn (\(_, idx, _) -> idx) chapters
