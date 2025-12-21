@@ -89,9 +89,10 @@ main = hakyll $ do
                     chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ htmlName ++ ")"
                 
                 -- Load chapter markdown, parse with Pandoc, extract subsections
-                item <- load (fromFilePath $ "source_md" </> fname)
-                pandoc <- readPandocWith defaultHakyllReaderOptions item
-                let subsections = extractTOCFromPandoc htmlName (itemBody pandoc)
+                pandoc <- unsafeCompiler $ do
+                    content <- readFile ("source_md" </> fname)
+                    runIOorExplode $ readMarkdown defaultHakyllReaderOptions (T.pack content)
+                let subsections = extractTOCFromPandoc htmlName pandoc
                 
                 return $ chapterLine : subsections
             
