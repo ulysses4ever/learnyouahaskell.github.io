@@ -1,4 +1,15 @@
-docs/*.html
-!docs/index.html
-
 .DS_Store
+
+# Hakyll
+_site/
+_hakyll_cache/
+_hakyll_tmp/
+dist/
+dist-newstyle/
+.cabal-sandbox/
+cabal.sandbox.config
+site
+
+# Nix
+result
+result-*

@@ -1,13 +1,23 @@
 ##
-# Build LYAH web site from Markdown sources using Pandoc and sed
+# Build LYAH web site from Markdown sources using Hakyll
 #
 
 all: site
+	./site build
 
-site:
-	cd markdown && ./generate.sh
+site: site.hs lyah-site.cabal
+	cabal build
+	cp $$(cabal list-bin site) ./site
 
 clean:
-	find ./docs -name '*.html' -not -name 'index.html' -delete
+	rm -rf _site _hakyll_cache _hakyll_tmp
+	cabal clean
+	rm -f site
+
+rebuild: clean site
+	./site rebuild
+
+watch: site
+	./site watch
 
 # end

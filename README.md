@@ -41,5 +41,47 @@ Discuss the ideas with the community.
 ## Licence
 This domain and repository is in no way affiliated with Miran Lipovača (the original author) and is being extended and modified with his permission as per the licence the original work was released under ([Creative Commons Attribution-Noncommercial-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-nc-sa/3.0/)) as well as his literal statement encouraging modifications to be made ([FAQ](http://learnyouahaskell.com/faq)).
 
+## Contributing
+
+### Building the site
+
+The site is built using [Hakyll](https://jaspervdj.be/hakyll/), a static site generator written in Haskell. You can build the site in two ways:
+
+#### Option 1: Using Nix (Recommended for first-time builds)
+
+Nix provides pre-compiled binary packages for all dependencies, which significantly speeds up the first build:
+
+```bash
+# Enter the Nix shell (installs all dependencies)
+nix-shell
+
+# Build the site (compiles and runs in one step)
+runhaskell site.hs build
+
+# Preview the site locally (optional)
+runhaskell site.hs watch
+# Then visit http://localhost:8000
+```
+
+#### Option 2: Using Cabal
+
+If you already have GHC and Cabal installed, you can build directly:
+
+```bash
+# Update package list (first time only)
+cabal update
+
+# Build and run the site generator
+cabal run site -- build
+
+# Preview the site locally (optional)
+cabal run site -- watch
+# Then visit http://localhost:8000
+```
+
+The generated site will be in the `_site/` directory.
+
+**Note:** The first build with Cabal may take longer as it compiles all dependencies from source. Nix is recommended if you want to avoid this initial compilation time.
+
 ##
 This work is licensed under a [Creative Commons Attribution-Noncommercial-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-nc-sa/3.0/).
