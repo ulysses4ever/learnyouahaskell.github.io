@@ -114,7 +114,7 @@ main = hakyll $ do
             -- Convert markdown to HTML using Pandoc directly
             htmlContent <- unsafeCompiler $ do
                 result <- runIOorExplode $ do
-                    pandocDoc <- readMarkdown def (T.pack fullContent)
+                    pandocDoc <- readMarkdown customReaderOptions (T.pack fullContent)
                     writeHtml5String def pandocDoc
                 return (T.unpack result)
             
