@@ -2,6 +2,7 @@
 
 # Hakyll
 _site/
+_cache/
 _hakyll_cache/
 _hakyll_tmp/
 dist/
