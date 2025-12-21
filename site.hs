@@ -9,7 +9,8 @@ import Text.Pandoc.Walk (query)
 import Text.Pandoc.Class (runIO, runIOorExplode)
 import Text.Pandoc.Readers.Markdown (readMarkdown)
 import Text.Pandoc.Writers.HTML (writeHtml5String)
-import Text.Pandoc.Options (def)
+import Text.Pandoc.Options (def, readerExtensions, writerExtensions, Extension(Ext_implicit_figures), ReaderOptions)
+import Text.Pandoc.Extensions (disableExtension)
 import System.Directory (listDirectory)
 import Control.Monad (forM_, forM)
 import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
@@ -17,6 +18,17 @@ import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
 -- Helper function to pair each element with its previous and next elements
 zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
 zipPrevNext xs = zip3 (Nothing : map Just xs) xs (map Just (tail xs) ++ [Nothing])
+
+-- Custom reader options that disable implicit_figures extension
+customReaderOptions :: ReaderOptions
+customReaderOptions = defaultHakyllReaderOptions
+  { readerExtensions = disableExtension Ext_implicit_figures 
+                      (readerExtensions defaultHakyllReaderOptions)
+  }
+
+-- Custom pandoc compiler that uses our custom reader options
+customPandocCompiler :: Compiler (Item String)
+customPandocCompiler = pandocCompilerWith customReaderOptions defaultHakyllWriterOptions
 
 main :: IO ()
 main = hakyll $ do
@@ -71,7 +83,7 @@ main = hakyll $ do
                             constField "next_title" nt <>
                             defaultContext
                 
-                pandocCompiler
+                customPandocCompiler
                     >>= loadAndApplyTemplate "config/template.html" ctx
                     >>= postProcessImages
     
@@ -91,7 +103,7 @@ main = hakyll $ do
                 -- Load chapter markdown, parse with Pandoc, extract subsections
                 pandoc <- unsafeCompiler $ do
                     content <- readFile ("source_md" </> fname)
-                    runIOorExplode $ readMarkdown defaultHakyllReaderOptions (T.pack content)
+                    runIOorExplode $ readMarkdown customReaderOptions (T.pack content)
                 let subsections = extractTOCFromPandoc htmlName pandoc
                 
                 return $ chapterLine : subsections
@@ -116,7 +128,7 @@ main = hakyll $ do
     match "source_md/faq.md" $ do
         route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
         compile $ do
-            pandocCompiler
+            customPandocCompiler
                 >>= loadAndApplyTemplate "config/template.html"
                         (constField "title" "FAQ - Learn You a Haskell for Great Good!" <>
                          constField "faq" "true" <>
@@ -143,7 +155,7 @@ buildChapterList = preprocess $ do
         let order = extractChapterNumber fullPath content
         
         -- Extract title from Pandoc AST
-        pandoc <- runIO $ readMarkdown defaultHakyllReaderOptions (T.pack content)
+        pandoc <- runIO $ readMarkdown customReaderOptions (T.pack content)
         title <- case pandoc of
             Right (Pandoc _ blocks) -> return $ extractFirstHeading blocks
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
