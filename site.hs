@@ -98,7 +98,8 @@ main = hakyll $ do
             
             -- Use pandocCompiler to convert markdown to HTML
             makeItem fullContent
-                >>= renderPandoc
+                >>= readPandoc
+                >>= writePandoc
                 >>= loadAndApplyTemplate "config/template.html"
                         (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
                          defaultContext)
