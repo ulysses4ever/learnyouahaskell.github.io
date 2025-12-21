@@ -6,8 +6,10 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Text.Pandoc.Definition
 import Text.Pandoc.Walk (query)
-import Text.Pandoc.Class (runIO)
+import Text.Pandoc.Class (runIO, runIOorExplode)
 import Text.Pandoc.Readers.Markdown (readMarkdown)
+import Text.Pandoc.Writers.HTML (writeHtml5String)
+import Text.Pandoc.Options (def)
 import System.Directory (listDirectory)
 import Control.Monad (forM_, forM)
 import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
@@ -96,10 +98,14 @@ main = hakyll $ do
             let tocContent = unlines $ concat tocLines
                 fullContent = headContent ++ "\n" ++ tocContent ++ "\n" ++ footContent
             
-            -- Use pandocCompiler to convert markdown to HTML
-            makeItem fullContent
-                >>= readPandoc
-                >>= writePandoc
+            -- Convert markdown to HTML using Pandoc directly
+            htmlContent <- unsafeCompiler $ do
+                result <- runIOorExplode $ do
+                    pandocDoc <- readMarkdown def (T.pack fullContent)
+                    writeHtml5String def pandocDoc
+                return (T.unpack result)
+            
+            makeItem htmlContent
                 >>= loadAndApplyTemplate "config/template.html"
                         (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
                          defaultContext)
