@@ -5,3 +5,6 @@ _site/
 _cache/
 dist-newstyle/
 site
+
+# Nix
+result

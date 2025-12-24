@@ -80,18 +80,19 @@ This is what we use in our GitHub CI for expediency.
 [nix]: https://nixos.org/
 
 ```bash
-# Enter the Nix shell (installs all dependencies)
-nix-shell
+# Build the site directly with Nix
+nix-build
 
-# Build the site (compiles and runs in one step)
-runhaskell site.hs build
-
-# Preview the site locally (optional)
-runhaskell site.hs watch
+# The generated site will be in the result/ symlink
+# To preview it, you can serve it with any static file server, e.g.:
+python3 -m http.server 8000 --directory result
 # Then visit http://localhost:8000
 ```
 
-A one-liner is `nix-shell --run 'runhaskell site.hs build'`, etc.
+Alternatively, you can use the Makefile:
+```bash
+make nix-build
+```
 
 ### Build results
 

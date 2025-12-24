@@ -1,6 +1,6 @@
 ##
 # Build LYAH web site from Markdown sources using Hakyll.
-# Requires GHC and Cabal.
+# Requires GHC and Cabal (for cabal-based builds) or Nix (for nix-based builds).
 #
 
 all: site
@@ -20,5 +20,12 @@ rebuild: clean site
 
 watch: site
 	./site watch
+
+# Nix-based build rules
+nix-build:
+	nix-build
+
+nix-clean:
+	rm -rf result _site _hakyll_cache _hakyll_tmp
 
 # end
