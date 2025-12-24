@@ -30,6 +30,19 @@ customReaderOptions = defaultHakyllReaderOptions
 customPandocCompiler :: Compiler (Item String)
 customPandocCompiler = pandocCompilerWith customReaderOptions defaultHakyllWriterOptions
 
+-- Helper function to build chapter context with optional prev/next navigation
+chapterCtx :: Maybe (FilePath, Int, String) -> Maybe (FilePath, Int, String) -> String -> Context String
+chapterCtx mprev mnext title =
+    constField "title" title <>
+    constField "footdiv" "true" <>
+    maybe mempty (\(pf, _, pt) -> 
+        constField "prev_filename" (replaceExtension pf ".html") <>
+        constField "prev_title" pt) mprev <>
+    maybe mempty (\(nf, _, nt) ->
+        constField "next_filename" (replaceExtension nf ".html") <>
+        constField "next_title" nt) mnext <>
+    defaultContext
+
 main :: IO ()
 main = hakyll $ do
     -- Copy static assets managed by Hakyll
@@ -57,31 +70,7 @@ main = hakyll $ do
         match (fromGlob $ "source_md" </> fname) $ do
             route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
             compile $ do
-                let ctx = case (mprev, mnext) of
-                        (Nothing, Nothing) -> 
-                            constField "title" title <> 
-                            constField "footdiv" "true" <>
-                            defaultContext
-                        (Nothing, Just (nf, _, nt)) ->
-                            constField "title" title <>
-                            constField "footdiv" "true" <>
-                            constField "next_filename" (replaceExtension nf ".html") <>
-                            constField "next_title" nt <>
-                            defaultContext
-                        (Just (pf, _, pt), Nothing) ->
-                            constField "title" title <>
-                            constField "footdiv" "true" <>
-                            constField "prev_filename" (replaceExtension pf ".html") <>
-                            constField "prev_title" pt <>
-                            defaultContext
-                        (Just (pf, _, pt), Just (nf, _, nt)) ->
-                            constField "title" title <>
-                            constField "footdiv" "true" <>
-                            constField "prev_filename" (replaceExtension pf ".html") <>
-                            constField "prev_title" pt <>
-                            constField "next_filename" (replaceExtension nf ".html") <>
-                            constField "next_title" nt <>
-                            defaultContext
+                let ctx = chapterCtx mprev mnext title
                 
                 customPandocCompiler
                     >>= loadAndApplyTemplate "config/template.html" ctx
