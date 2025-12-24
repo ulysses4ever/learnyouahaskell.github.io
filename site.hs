@@ -86,6 +86,7 @@ main = hakyll $ do
             -- Build TOC from all chapters using pre-computed subsections
             let buildChapterTOC (fname, idx, title, subsections) =
                     let htmlName = replaceExtension fname ".html"
+                        -- Use extra space for single-digit chapters to align TOC entries
                         sp = if idx >= 10 then " " else "  "
                         chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ htmlName ++ ")"
                     in chapterLine : subsections
@@ -139,10 +140,10 @@ buildChapterList = preprocess $ do
         -- Extract title and subsections from Pandoc AST
         pandoc <- runIO $ readMarkdown customReaderOptions (T.pack content)
         (title, subsections) <- case pandoc of
-            Right doc@(Pandoc _ blocks) -> do
+            Right pandocDoc@(Pandoc _ blocks) -> do
                 let htmlName = replaceExtension fname ".html"
                     title = extractFirstHeading blocks
-                    subsections = extractTOCFromPandoc htmlName doc
+                    subsections = extractTOCFromPandoc htmlName pandocDoc
                 return (title, subsections)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
         
