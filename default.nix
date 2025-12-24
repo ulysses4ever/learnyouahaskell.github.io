@@ -8,11 +8,17 @@ pkgs.stdenv.mkDerivation {
   name = "learnyouahaskell-site";
   src = ./.;
   
-  buildInputs = [ siteGenerator ];
+  nativeBuildInputs = [ siteGenerator ];
   
   buildPhase = ''
     # Run the site generator to build the static site
     ${siteGenerator}/bin/site build
+    
+    # Verify the site was built successfully
+    if [ ! -d "_site" ]; then
+      echo "Error: _site directory was not created"
+      exit 1
+    fi
   '';
   
   installPhase = ''
