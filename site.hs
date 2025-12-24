@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns #-}
 import Hakyll
 import Data.List (sortOn, find, isPrefixOf)
 import Data.Maybe (fromMaybe, mapMaybe, listToMaybe)
@@ -14,6 +15,14 @@ import Text.Pandoc.Extensions (disableExtension)
 import System.Directory (listDirectory)
 import Control.Monad (forM_, forM)
 import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
+
+-- Data type for chapter metadata
+data ChapterInfo = ChapterInfo
+    { chapterFile :: FilePath
+    , chapterNumber :: Int
+    , chapterTitle :: String
+    , chapterSubsections :: [String]
+    }
 
 -- Helper function to pair each element with its previous and next elements
 zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
@@ -31,16 +40,16 @@ customPandocCompiler :: Compiler (Item String)
 customPandocCompiler = pandocCompilerWith customReaderOptions defaultHakyllWriterOptions
 
 -- Helper function to build chapter context with optional prev/next navigation
-chapterCtx :: Maybe (FilePath, Int, String, [String]) -> Maybe (FilePath, Int, String, [String]) -> String -> Context String
+chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
 chapterCtx mprev mnext title =
     constField "title" title <>
     constField "footdiv" "true" <>
-    maybe mempty (\(pf, _, pt, _) -> 
-        constField "prev_filename" (replaceExtension pf ".html") <>
-        constField "prev_title" pt) mprev <>
-    maybe mempty (\(nf, _, nt, _) ->
-        constField "next_filename" (replaceExtension nf ".html") <>
-        constField "next_title" nt) mnext <>
+    maybe mempty (\ChapterInfo{chapterFile, chapterTitle} -> 
+        constField "prev_filename" (replaceExtension chapterFile ".html") <>
+        constField "prev_title" chapterTitle) mprev <>
+    maybe mempty (\ChapterInfo{chapterFile, chapterTitle} ->
+        constField "next_filename" (replaceExtension chapterFile ".html") <>
+        constField "next_title" chapterTitle) mnext <>
     defaultContext
 
 main :: IO ()
@@ -66,11 +75,11 @@ main = hakyll $ do
     
     -- Process chapter markdown files
     let chapterTriples = zipPrevNext chapterFiles
-    forM_ chapterTriples $ \(mprev, (fname, idx, title, _), mnext) -> do
-        match (fromGlob $ "source_md" </> fname) $ do
+    forM_ chapterTriples $ \(mprev, ChapterInfo{chapterFile, chapterTitle}, mnext) -> do
+        match (fromGlob $ "source_md" </> chapterFile) $ do
             route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
             compile $ do
-                let ctx = chapterCtx mprev mnext title
+                let ctx = chapterCtx mprev mnext chapterTitle
                 
                 customPandocCompiler
                     >>= loadAndApplyTemplate "config/template.html" ctx
@@ -84,12 +93,12 @@ main = hakyll $ do
             footContent <- unsafeCompiler $ readFile "source_md/chapters_foot.md"
             
             -- Build TOC from all chapters using pre-computed subsections
-            let buildChapterTOC (fname, idx, title, subsections) =
-                    let htmlName = replaceExtension fname ".html"
+            let buildChapterTOC ChapterInfo{chapterFile, chapterNumber, chapterTitle, chapterSubsections} =
+                    let htmlName = replaceExtension chapterFile ".html"
                         -- Use extra space for single-digit chapters to align TOC entries
-                        sp = if idx >= 10 then " " else "  "
-                        chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ htmlName ++ ")"
-                    in chapterLine : subsections
+                        sp = if chapterNumber >= 10 then " " else "  "
+                        chapterLine = show chapterNumber ++ "." ++ sp ++ "[" ++ chapterTitle ++ "](" ++ htmlName ++ ")"
+                    in chapterLine : chapterSubsections
                 tocLines = concatMap buildChapterTOC chapterFiles
                 tocContent = unlines tocLines
                 fullContent = headContent ++ "\n" ++ tocContent ++ "\n" ++ footContent
@@ -121,15 +130,15 @@ main = hakyll $ do
 
 
 -- Build list of chapters sorted by chapter number from YAML metadata
-buildChapterList :: Rules [(FilePath, Int, String, [String])]
+buildChapterList :: Rules [ChapterInfo]
 buildChapterList = preprocess $ do
     files <- listDirectory "source_md"
     let mdFiles = filter (\f -> takeExtension f == ".md") files
         chapterFiles = filter (not . isFaqOrHelper) mdFiles
     chapters <- mapM getChapterData chapterFiles
-    return $ sortOn (\(_, idx, _, _) -> idx) chapters
+    return $ sortOn chapterNumber chapters
   where
-    getChapterData :: FilePath -> IO (FilePath, Int, String, [String])
+    getChapterData :: FilePath -> IO ChapterInfo
     getChapterData fname = do
         let fullPath = "source_md" </> fname
         content <- readFile fullPath
@@ -147,8 +156,13 @@ buildChapterList = preprocess $ do
                 return (title, subsections)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
         
-        -- Return just the filename, not the full path
-        return (fname, order, title, subsections)
+        -- Return chapter info
+        return ChapterInfo
+            { chapterFile = fname
+            , chapterNumber = order
+            , chapterTitle = title
+            , chapterSubsections = subsections
+            }
     
     extractChapterNumber :: FilePath -> String -> Int
     extractChapterNumber fname content =
