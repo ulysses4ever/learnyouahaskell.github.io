@@ -31,14 +31,14 @@ customPandocCompiler :: Compiler (Item String)
 customPandocCompiler = pandocCompilerWith customReaderOptions defaultHakyllWriterOptions
 
 -- Helper function to build chapter context with optional prev/next navigation
-chapterCtx :: Maybe (FilePath, Int, String) -> Maybe (FilePath, Int, String) -> String -> Context String
+chapterCtx :: Maybe (FilePath, Int, String, [String]) -> Maybe (FilePath, Int, String, [String]) -> String -> Context String
 chapterCtx mprev mnext title =
     constField "title" title <>
     constField "footdiv" "true" <>
-    maybe mempty (\(pf, _, pt) -> 
+    maybe mempty (\(pf, _, pt, _) -> 
         constField "prev_filename" (replaceExtension pf ".html") <>
         constField "prev_title" pt) mprev <>
-    maybe mempty (\(nf, _, nt) ->
+    maybe mempty (\(nf, _, nt, _) ->
         constField "next_filename" (replaceExtension nf ".html") <>
         constField "next_title" nt) mnext <>
     defaultContext
@@ -66,7 +66,7 @@ main = hakyll $ do
     
     -- Process chapter markdown files
     let chapterTriples = zipPrevNext chapterFiles
-    forM_ chapterTriples $ \(mprev, (fname, idx, title), mnext) -> do
+    forM_ chapterTriples $ \(mprev, (fname, idx, title, _), mnext) -> do
         match (fromGlob $ "source_md" </> fname) $ do
             route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
             compile $ do
@@ -83,21 +83,14 @@ main = hakyll $ do
             headContent <- unsafeCompiler $ readFile "source_md/chapters_head.md"
             footContent <- unsafeCompiler $ readFile "source_md/chapters_foot.md"
             
-            -- Build TOC from all chapters using Pandoc to extract headings
-            tocLines <- forM chapterFiles $ \(fname, idx, title) -> do
-                let htmlName = replaceExtension fname ".html"
-                    sp = if idx >= 10 then " " else "  "
-                    chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ htmlName ++ ")"
-                
-                -- Load chapter markdown, parse with Pandoc, extract subsections
-                pandoc <- unsafeCompiler $ do
-                    content <- readFile ("source_md" </> fname)
-                    runIOorExplode $ readMarkdown customReaderOptions (T.pack content)
-                let subsections = extractTOCFromPandoc htmlName pandoc
-                
-                return $ chapterLine : subsections
-            
-            let tocContent = unlines $ concat tocLines
+            -- Build TOC from all chapters using pre-computed subsections
+            let buildChapterTOC (fname, idx, title, subsections) =
+                    let htmlName = replaceExtension fname ".html"
+                        sp = if idx >= 10 then " " else "  "
+                        chapterLine = show idx ++ "." ++ sp ++ "[" ++ title ++ "](" ++ htmlName ++ ")"
+                    in chapterLine : subsections
+                tocLines = concatMap buildChapterTOC chapterFiles
+                tocContent = unlines tocLines
                 fullContent = headContent ++ "\n" ++ tocContent ++ "\n" ++ footContent
             
             -- Convert markdown to HTML using Pandoc directly
@@ -127,15 +120,15 @@ main = hakyll $ do
 
 
 -- Build list of chapters sorted by chapter number from YAML metadata
-buildChapterList :: Rules [(FilePath, Int, String)]
+buildChapterList :: Rules [(FilePath, Int, String, [String])]
 buildChapterList = preprocess $ do
     files <- listDirectory "source_md"
     let mdFiles = filter (\f -> takeExtension f == ".md") files
         chapterFiles = filter (not . isFaqOrHelper) mdFiles
     chapters <- mapM getChapterData chapterFiles
-    return $ sortOn (\(_, idx, _) -> idx) chapters
+    return $ sortOn (\(_, idx, _, _) -> idx) chapters
   where
-    getChapterData :: FilePath -> IO (FilePath, Int, String)
+    getChapterData :: FilePath -> IO (FilePath, Int, String, [String])
     getChapterData fname = do
         let fullPath = "source_md" </> fname
         content <- readFile fullPath
@@ -143,14 +136,18 @@ buildChapterList = preprocess $ do
         -- Extract chapter number from YAML frontmatter
         let order = extractChapterNumber fullPath content
         
-        -- Extract title from Pandoc AST
+        -- Extract title and subsections from Pandoc AST
         pandoc <- runIO $ readMarkdown customReaderOptions (T.pack content)
-        title <- case pandoc of
-            Right (Pandoc _ blocks) -> return $ extractFirstHeading blocks
+        (title, subsections) <- case pandoc of
+            Right doc@(Pandoc _ blocks) -> do
+                let htmlName = replaceExtension fname ".html"
+                    title = extractFirstHeading blocks
+                    subsections = extractTOCFromPandoc htmlName doc
+                return (title, subsections)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
         
         -- Return just the filename, not the full path
-        return (fname, order, title)
+        return (fname, order, title, subsections)
     
     extractChapterNumber :: FilePath -> String -> Int
     extractChapterNumber fname content =
