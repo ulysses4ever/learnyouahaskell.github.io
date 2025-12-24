@@ -18,6 +18,6 @@ pkgs.stdenv.mkDerivation {
   installPhase = ''
     # Copy the generated site to the output directory
     mkdir -p $out
-    cp -r _site/* $out/
+    cp -r _site/. $out/
   '';
 }
