@@ -90,18 +90,23 @@ main = hakyll $ do
     create ["chapters.html"] $ do
         route idRoute
         compile $ do
+            -- Helper to safely parse markdown links: * [title](url)
+            let parseMarkdownLink :: String -> (String, String)
+                parseMarkdownLink s = 
+                    let afterBracket = dropWhile (/= '[') s
+                        titlePart = if null afterBracket 
+                                   then ""
+                                   else takeWhile (/= ']') $ drop 1 afterBracket
+                        afterParen = dropWhile (/= '(') s
+                        urlPart = if null afterParen
+                                 then ""
+                                 else takeWhile (/= ')') $ drop 1 afterParen
+                    in (titlePart, urlPart)
+            
             -- Build context with chapter list
             let subsectionContext = 
-                    field "link" (\item -> do
-                        let s = itemBody item
-                        -- Extract URL from markdown link format: * [title](url)
-                        let urlPart = takeWhile (/= ')') $ drop 1 $ dropWhile (/= '(') s
-                        return urlPart) <>
-                    field "title" (\item -> do
-                        let s = itemBody item
-                        -- Extract title from markdown link format: * [title](url)
-                        let titlePart = takeWhile (/= ']') $ drop 1 $ dropWhile (/= '[') s
-                        return titlePart)
+                    field "link" (\item -> return $ snd $ parseMarkdownLink $ itemBody item) <>
+                    field "title" (\item -> return $ fst $ parseMarkdownLink $ itemBody item)
                 
                 makeSubsectionItem :: String -> Item String
                 makeSubsectionItem s = Item (fromFilePath s) s
