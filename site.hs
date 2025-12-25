@@ -197,19 +197,12 @@ extractFirstHeading blocks =
 
 -- Extract TOC from Pandoc document using Pandoc's AST
 extractTOCFromPandoc :: String -> Pandoc -> [Section]
-extractTOCFromPandoc htmlName (Pandoc _ blocks) =
-    let headers = query getHeader blocks
-    in mapMaybe makeSection headers
+extractTOCFromPandoc htmlName (Pandoc _ blocks) = query getSection blocks
   where
-    getHeader :: Block -> [(Int, String, String)]
-    getHeader (Header level (anchor, _, _) inlines) =
-        [(level, T.unpack anchor, inlineToString inlines)]
-    getHeader _ = []
-    
-    makeSection :: (Int, String, String) -> Maybe Section
-    makeSection (level, anchor, title)
-        | level == 2 = Just $ Section anchor title
-        | otherwise = Nothing
+    getSection :: Block -> [Section]
+    getSection (Header 2 (anchor, _, _) inlines) =
+        [Section (T.unpack anchor) (inlineToString inlines)]
+    getSection _ = []
 
 -- Helper to convert Pandoc inlines to string
 inlineToString :: [Inline] -> String
