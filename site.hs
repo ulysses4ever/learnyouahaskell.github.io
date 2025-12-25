@@ -60,13 +60,15 @@ chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
 chapterCtx mprev mnext title =
     constField "title" title <>
     constField "footdiv" "true" <>
-    maybe mempty (\ChapterInfo{chapterFile, chapterTitle} -> 
-        constField "prev_filename" (replaceExtension chapterFile ".html") <>
-        constField "prev_title" chapterTitle) mprev <>
-    maybe mempty (\ChapterInfo{chapterFile, chapterTitle} ->
-        constField "next_filename" (replaceExtension chapterFile ".html") <>
-        constField "next_title" chapterTitle) mnext <>
+    maybeChapterContext "prev" mprev <>
+    maybeChapterContext "next" mnext <>
     defaultContext
+  where
+    maybeChapterContext :: String -> Maybe ChapterInfo -> Context String
+    maybeChapterContext prefix mchapter =
+        maybe mempty (\ChapterInfo{chapterFile, chapterTitle} ->
+            constField (prefix ++ "_filename") (replaceExtension chapterFile ".html") <>
+            constField (prefix ++ "_title") chapterTitle) mchapter
 
 main :: IO ()
 main = hakyll $ do
@@ -112,9 +114,7 @@ main = hakyll $ do
                         let (chFile, sec) = itemBody item
                         -- Build full URL from chapter file and section anchor
                         return $ replaceExtension chFile ".html" ++ "#" ++ sectionAnchor sec) <>
-                    field "title" (\item -> do
-                        let (_, sec) = itemBody item
-                        return $ sectionTitle sec)
+                    field "title" (return . sectionTitle . snd . itemBody)
                 
                 makeSectionItem :: ChapterInfo -> Section -> Item (FilePath, Section)
                 makeSectionItem ch sec = Item (fromFilePath $ chapterFile ch) (chapterFile ch, sec)
