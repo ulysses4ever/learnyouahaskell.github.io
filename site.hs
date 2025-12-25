@@ -30,46 +30,6 @@ data Section = Section
     , sectionTitle :: String
     }
 
--- Helper function to pair each element with its previous and next elements
-zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
-zipPrevNext xs = zip3 (Nothing : map Just xs) xs (map Just (tail xs) ++ [Nothing])
-
--- Custom reader options that disable implicit_figures extension
-customReaderOptions :: ReaderOptions
-customReaderOptions = defaultHakyllReaderOptions
-  { readerExtensions = disableExtension Ext_implicit_figures 
-                      (readerExtensions defaultHakyllReaderOptions)
-  }
-
--- Custom pandoc compiler that uses our custom reader options
-customPandocCompiler :: Compiler (Item String)
-customPandocCompiler = pandocCompilerWith customReaderOptions defaultHakyllWriterOptions
-
--- Helper to convert Pandoc inlines to string
-inlineToString :: [Inline] -> String
-inlineToString = query getString
-  where
-    getString :: Inline -> String
-    getString (Str s) = T.unpack s
-    getString Space = " "
-    getString (Code _ s) = T.unpack s
-    getString _ = ""
-
--- Helper function to build chapter context with optional prev/next navigation
-chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
-chapterCtx mprev mnext title =
-    constField "title" title <>
-    constField "footdiv" "true" <>
-    maybeChapterContext "prev" mprev <>
-    maybeChapterContext "next" mnext <>
-    defaultContext
-  where
-    maybeChapterContext :: String -> Maybe ChapterInfo -> Context String
-    maybeChapterContext prefix mchapter =
-        maybe mempty (\ChapterInfo{chapterFile, chapterTitle} ->
-            constField (prefix ++ "_filename") (replaceExtension chapterFile ".html") <>
-            constField (prefix ++ "_title") chapterTitle) mchapter
-
 main :: IO ()
 main = hakyll $ do
     -- Copy static assets managed by Hakyll
@@ -199,6 +159,32 @@ buildChapterList = preprocess $ do
           | needle `isPrefixOf` haystack = True
           | otherwise = isInfixOf needle xs
 
+-- Helper function to build chapter context with optional prev/next navigation
+chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
+chapterCtx mprev mnext title =
+    constField "title" title <>
+    constField "footdiv" "true" <>
+    maybeChapterContext "prev" mprev <>
+    maybeChapterContext "next" mnext <>
+    defaultContext
+  where
+    maybeChapterContext :: String -> Maybe ChapterInfo -> Context String
+    maybeChapterContext prefix mchapter =
+        maybe mempty (\ChapterInfo{chapterFile, chapterTitle} ->
+            constField (prefix ++ "_filename") (replaceExtension chapterFile ".html") <>
+            constField (prefix ++ "_title") chapterTitle) mchapter
+
+-- Custom pandoc compiler that uses our custom reader options
+customPandocCompiler :: Compiler (Item String)
+customPandocCompiler = pandocCompilerWith customReaderOptions defaultHakyllWriterOptions
+
+-- Custom reader options that disable implicit_figures extension
+customReaderOptions :: ReaderOptions
+customReaderOptions = defaultHakyllReaderOptions
+  { readerExtensions = disableExtension Ext_implicit_figures 
+                      (readerExtensions defaultHakyllReaderOptions)
+  }
+
 -- Extract first heading from Pandoc blocks
 extractFirstHeading :: [Block] -> String
 extractFirstHeading blocks = 
@@ -224,3 +210,17 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) =
     makeSection (level, anchor, title)
         | level == 2 = Just $ Section anchor title
         | otherwise = Nothing
+
+-- Helper to convert Pandoc inlines to string
+inlineToString :: [Inline] -> String
+inlineToString = query getString
+  where
+    getString :: Inline -> String
+    getString (Str s) = T.unpack s
+    getString Space = " "
+    getString (Code _ s) = T.unpack s
+    getString _ = ""
+
+-- Helper function to pair each element with its previous and next elements
+zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
+zipPrevNext xs = zip3 (Nothing : map Just xs) xs (map Just (tail xs) ++ [Nothing])
