@@ -69,11 +69,6 @@ main = hakyll $ do
     
     -- Templates
     match "config/template.html" $ compile templateBodyCompiler
-    match "config/chapters-toc.html" $ compile templateBodyCompiler
-    
-    -- Compile chapters_head and chapters_foot as snapshot items for dependency tracking
-    match "source_md/chapters_head.md" $ compile getResourceBody
-    match "source_md/chapters_foot.md" $ compile getResourceBody
     
     -- Collect all chapters with their metadata
     chapterFiles <- buildChapterList
@@ -94,9 +89,9 @@ main = hakyll $ do
     create ["chapters.html"] $ do
         route idRoute
         compile $ do
-            -- Load head and foot content using proper Hakyll dependency tracking
-            headContent <- fmap itemBody $ load "source_md/chapters_head.md"
-            footContent <- fmap itemBody $ load "source_md/chapters_foot.md"
+            -- Header and footer content embedded directly
+            let headContent = "# Learn You a Haskell for Great Good! \n\n"
+                footContent = "\nThis work is licensed under a [Creative Commons Attribution-Noncommercial-Share Alike 3.0 Unported License](https://creativecommons.org/licenses/by-nc-sa/3.0/){rel=license} because I couldn't find a license with an even longer name.\n\n"
             
             -- Build TOC from all chapters using pre-computed subsections
             let buildChapterTOC ChapterInfo{chapterFile, chapterNumber, chapterTitle, chapterSubsections} =
@@ -107,7 +102,7 @@ main = hakyll $ do
                     in chapterLine : chapterSubsections
                 tocLines = concatMap buildChapterTOC chapterFiles
                 tocContent = unlines tocLines
-                fullContent = headContent ++ "\n" ++ tocContent ++ "\n" ++ footContent
+                fullContent = headContent ++ tocContent ++ footContent
             
             -- Convert markdown to HTML using Pandoc in Compiler monad
             htmlContent <- unsafeCompiler $ do
