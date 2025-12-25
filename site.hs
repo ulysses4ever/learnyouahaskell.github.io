@@ -97,11 +97,8 @@ main = hakyll $ do
     forM_ chapterTriples $ \(mprev, ChapterInfo{chapterFile, chapterTitle}, mnext) -> do
         match (fromGlob $ "source_md" </> chapterFile) $ do
             route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
-            compile $ do
-                let ctx = chapterCtx mprev mnext chapterTitle
-                
-                customPandocCompiler
-                    >>= loadAndApplyTemplate "config/template.html" ctx
+            compile (customPandocCompiler
+                >>= loadAndApplyTemplate "config/template.html" (chapterCtx mprev mnext chapterTitle))
     
     -- Generate chapters.html (TOC)
     create ["chapters.html"] $ do
