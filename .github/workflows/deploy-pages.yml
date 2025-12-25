@@ -22,7 +22,8 @@ jobs:
         env:
           NIXPKGS_ALLOW_UNFREE: 1
         run: |
-          nix-shell --run "runhaskell site.hs build"
+          nix-build
+          result/bin/site build
       
       - name: Upload artifact
         if: github.ref == 'refs/heads/main'

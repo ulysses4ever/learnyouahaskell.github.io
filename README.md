@@ -80,18 +80,22 @@ This is what we use in our GitHub CI for expediency.
 [nix]: https://nixos.org/
 
 ```bash
-# Enter the Nix shell (installs all dependencies)
-nix-shell
+# Build the site generator binary with Nix
+nix-build
 
-# Build the site (compiles and runs in one step)
-runhaskell site.hs build
+# Run the site generator to build the site
+result/bin/site build
 
 # Preview the site locally (optional)
-runhaskell site.hs watch
+result/bin/site watch
 # Then visit http://localhost:8000
 ```
 
-A one-liner is `nix-shell --run 'runhaskell site.hs build'`, etc.
+Alternatively, you can use the Makefile:
+```bash
+# Build the binary and generate the site
+make nix-site
+```
 
 ### Build results
 
