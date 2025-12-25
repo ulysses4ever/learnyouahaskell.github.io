@@ -21,11 +21,11 @@ data ChapterInfo = ChapterInfo
     { chapterFile :: FilePath
     , chapterNumber :: Int
     , chapterTitle :: String
-    , chapterSubsections :: [Subsection]
+    , chapterSubsections :: [Section]
     }
 
 -- Data type for subsection with anchor and title
-data Subsection = Subsection
+data Section = Section
     { subsectionAnchor :: String
     , subsectionTitle :: String
     }
@@ -107,7 +107,7 @@ main = hakyll $ do
                         let (_, subsec) = itemBody item
                         return $ subsectionTitle subsec)
                 
-                makeSubsectionItem :: ChapterInfo -> Subsection -> Item (FilePath, Subsection)
+                makeSubsectionItem :: ChapterInfo -> Section -> Item (FilePath, Section)
                 makeSubsectionItem ch subsec = Item (fromFilePath $ chapterFile ch) (chapterFile ch, subsec)
                 
                 chapterItemContext = 
@@ -214,7 +214,7 @@ extractFirstHeading blocks =
     getString _ = ""
 
 -- Extract TOC from Pandoc document using Pandoc's AST
-extractTOCFromPandoc :: String -> Pandoc -> [Subsection]
+extractTOCFromPandoc :: String -> Pandoc -> [Section]
 extractTOCFromPandoc htmlName (Pandoc _ blocks) =
     let headers = query getHeader blocks
     in mapMaybe makeSubsection headers
@@ -233,9 +233,9 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) =
     getString (Code _ s) = T.unpack s
     getString _ = ""
     
-    makeSubsection :: (Int, String, String) -> Maybe Subsection
+    makeSubsection :: (Int, String, String) -> Maybe Section
     makeSubsection (level, anchor, title)
-        | level == 2 = Just $ Subsection anchor title
+        | level == 2 = Just $ Section anchor title
         | otherwise = Nothing
 
 -- Post-process images
