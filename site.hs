@@ -68,7 +68,7 @@ main = hakyll $ do
         ]
     
     -- Template
-    match "config/template.html" $ compile templateBodyCompiler
+    match "templates/template.html" $ compile templateBodyCompiler
     
     -- Collect all chapters with their metadata
     chapterFiles <- buildChapterList
@@ -82,7 +82,7 @@ main = hakyll $ do
                 let ctx = chapterCtx mprev mnext chapterTitle
                 
                 customPandocCompiler
-                    >>= loadAndApplyTemplate "config/template.html" ctx
+                    >>= loadAndApplyTemplate "templates/template.html" ctx
                     >>= postProcessImages
     
     -- Generate chapters.html (TOC)
@@ -111,7 +111,7 @@ main = hakyll $ do
                 return (T.unpack result)
             
             makeItem htmlContent
-                >>= loadAndApplyTemplate "config/template.html"
+                >>= loadAndApplyTemplate "templates/template.html"
                         (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
                          defaultContext)
                 >>= postProcessChaptersList
@@ -121,7 +121,7 @@ main = hakyll $ do
         route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
         compile $ do
             customPandocCompiler
-                >>= loadAndApplyTemplate "config/template.html"
+                >>= loadAndApplyTemplate "templates/template.html"
                         (constField "title" "FAQ - Learn You a Haskell for Great Good!" <>
                          constField "faq" "true" <>
                          defaultContext)
