@@ -103,7 +103,9 @@ main = hakyll $ do
                         let (chFile, subsec) = itemBody item
                         -- Build full URL from chapter file and subsection anchor
                         return $ replaceExtension chFile ".html" ++ "#" ++ subsectionAnchor subsec) <>
-                    field "title" (\item -> return $ subsectionTitle $ snd $ itemBody item)
+                    field "title" (\item -> do
+                        let (_, subsec) = itemBody item
+                        return $ subsectionTitle subsec)
                 
                 makeSubsectionItem :: ChapterInfo -> Subsection -> Item (FilePath, Subsection)
                 makeSubsectionItem ch subsec = Item (fromFilePath $ chapterFile ch) (chapterFile ch, subsec)
@@ -161,16 +163,15 @@ buildChapterList = preprocess $ do
         (order, title, subsections) <- case pandoc of
             Right pandocDoc@(Pandoc meta blocks) -> do
                 let htmlName = replaceExtension fname ".html"
+                    -- Helper to parse chapter number from MetaValue
+                    parseChapterNumber :: T.Text -> Int
+                    parseChapterNumber chapterStr = case reads (T.unpack chapterStr) of
+                        [(n, "")] -> n
+                        _ -> error $ "Invalid chapter number in " ++ fullPath
                     -- Extract chapter number from Pandoc metadata
                     order = case M.lookup "chapter" (unMeta meta) of
-                        Just (MetaInlines [Str chapterStr]) -> 
-                            case reads (T.unpack chapterStr) of
-                                [(n, "")] -> n
-                                _ -> error $ "Invalid chapter number in " ++ fullPath
-                        Just (MetaString chapterStr) -> 
-                            case reads (T.unpack chapterStr) of
-                                [(n, "")] -> n
-                                _ -> error $ "Invalid chapter number in " ++ fullPath
+                        Just (MetaInlines [Str chapterStr]) -> parseChapterNumber chapterStr
+                        Just (MetaString chapterStr) -> parseChapterNumber chapterStr
                         _ -> error $ "No chapter field in YAML metadata in: " ++ fullPath
                     title = extractFirstHeading blocks
                     subsections = extractTOCFromPandoc htmlName pandocDoc
