@@ -30,20 +30,16 @@ data Section = Section
     , sectionTitle :: String
     }
 
+-- Helper route to strip source_md/ directory and set .html extension
+stripSourceMdRoute :: Routes
+stripSourceMdRoute = customRoute (takeFileName . toFilePath) `composeRoutes` setExtension "html"
+
 main :: IO ()
 main = hakyll $ do
     -- Copy static assets managed by Hakyll
-    let copyDocs pat = match pat $ do
-            route $ gsubRoute "static/" (const "")
-            compile copyFileCompiler
-
-    mapM_ copyDocs
-        [ "static/assets/**"
-        , "static/sh/**"
-        , "static/index.html"
-        , "static/robots.txt"
-        , "static/sitemap.xml"
-        ]
+    match "static/**" $ do
+        route $ gsubRoute "static/" (const "")
+        compile copyFileCompiler
     
     -- Templates
     match "config/template.html" $ compile templateBodyCompiler
@@ -56,7 +52,7 @@ main = hakyll $ do
     let chapterTriples = zipPrevNext chapterFiles
     forM_ chapterTriples $ \(mprev, ChapterInfo{chapterFile, chapterTitle}, mnext) -> do
         match (fromGlob $ "source_md" </> chapterFile) $ do
-            route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
+            route stripSourceMdRoute
             compile (customPandocCompiler
                 >>= loadAndApplyTemplate "config/template.html" (chapterCtx mprev mnext chapterTitle))
     
@@ -99,7 +95,7 @@ main = hakyll $ do
     
     -- Generate faq.html
     match "source_md/faq.md" $ do
-        route $ gsubRoute "source_md/" (const "") `composeRoutes` setExtension "html"
+        route stripSourceMdRoute
         compile $ do
             customPandocCompiler
                 >>= loadAndApplyTemplate "config/template.html"
