@@ -80,18 +80,21 @@ This is what we use in our GitHub CI for expediency.
 [nix]: https://nixos.org/
 
 ```bash
-# Build the site directly with Nix
+# Build the site generator binary with Nix
 nix-build
 
-# The generated site will be in the result/ symlink
-# To preview it, you can serve it with any static file server, e.g.:
-python3 -m http.server 8000 --directory result
+# Run the site generator to build the site
+result/bin/site build
+
+# Preview the site locally (optional)
+result/bin/site watch
 # Then visit http://localhost:8000
 ```
 
 Alternatively, you can use the Makefile:
 ```bash
-make nix-build
+# Build the binary and generate the site
+make nix-site
 ```
 
 ### Build results

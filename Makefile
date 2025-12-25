@@ -24,8 +24,13 @@ watch: site
 # Nix-based build rules
 nix-build:
 	nix-build
+	cp -L result/bin/site ./site
+
+nix-site: nix-build
+	./site build
 
 nix-clean:
 	rm -rf result _site _hakyll_cache _hakyll_tmp
+	rm -f site
 
 # end

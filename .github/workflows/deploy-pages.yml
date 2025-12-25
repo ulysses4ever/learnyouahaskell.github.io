@@ -23,8 +23,7 @@ jobs:
           NIXPKGS_ALLOW_UNFREE: 1
         run: |
           nix-build
-          mkdir -p _site
-          cp -r result/. _site/
+          result/bin/site build
       
       - name: Upload artifact
         if: github.ref == 'refs/heads/main'
