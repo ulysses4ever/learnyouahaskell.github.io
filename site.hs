@@ -45,6 +45,16 @@ customReaderOptions = defaultHakyllReaderOptions
 customPandocCompiler :: Compiler (Item String)
 customPandocCompiler = pandocCompilerWith customReaderOptions defaultHakyllWriterOptions
 
+-- Helper to convert Pandoc inlines to string
+inlineToString :: [Inline] -> String
+inlineToString = query getString
+  where
+    getString :: Inline -> String
+    getString (Str s) = T.unpack s
+    getString Space = " "
+    getString (Code _ s) = T.unpack s
+    getString _ = ""
+
 -- Helper function to build chapter context with optional prev/next navigation
 chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
 chapterCtx mprev mnext title =
@@ -90,7 +100,6 @@ main = hakyll $ do
                 
                 customPandocCompiler
                     >>= loadAndApplyTemplate "config/template.html" ctx
-                    >>= postProcessImages
     
     -- Generate chapters.html (TOC)
     create ["chapters.html"] $ do
@@ -111,9 +120,9 @@ main = hakyll $ do
                 makeSubsectionItem ch subsec = Item (fromFilePath $ chapterFile ch) (chapterFile ch, subsec)
                 
                 chapterItemContext = 
-                    field "htmlname" (\item -> return $ replaceExtension (chapterFile $ itemBody item) ".html") <>
-                    field "title" (\item -> return $ chapterTitle $ itemBody item) <>
-                    field "number" (\item -> return $ show $ chapterNumber $ itemBody item) <>
+                    field "htmlname" (return . flip replaceExtension ".html" . chapterFile . itemBody) <>
+                    field "title" (return . chapterTitle . itemBody) <>
+                    field "number" (return . show . chapterNumber . itemBody) <>
                     listFieldWith "subsections" subsectionContext (\item -> 
                         let ch = itemBody item
                         in return $ map (makeSubsectionItem ch) $ chapterSubsections ch)
@@ -140,7 +149,6 @@ main = hakyll $ do
                         (constField "title" "FAQ - Learn You a Haskell for Great Good!" <>
                          constField "faq" "true" <>
                          defaultContext)
-                >>= postProcessImages
 
 
 
@@ -187,7 +195,7 @@ buildChapterList = preprocess $ do
             }
     
     isFaqOrHelper :: FilePath -> Bool
-    isFaqOrHelper fname = any (`isInfixOf` fname) ["faq.md", "chapters_head.md", "chapters_foot.md"]
+    isFaqOrHelper fname = "faq.md" `isInfixOf` fname
       where
         isInfixOf needle [] = False
         isInfixOf needle haystack@(x:xs)
@@ -203,15 +211,6 @@ extractFirstHeading blocks =
   where
     isHeader (Header 1 _ _) = True
     isHeader _ = False
-    
-    inlineToString :: [Inline] -> String
-    inlineToString = query getString
-    
-    getString :: Inline -> String
-    getString (Str s) = T.unpack s
-    getString Space = " "
-    getString (Code _ s) = T.unpack s
-    getString _ = ""
 
 -- Extract TOC from Pandoc document using Pandoc's AST
 extractTOCFromPandoc :: String -> Pandoc -> [Section]
@@ -224,52 +223,7 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) =
         [(level, T.unpack anchor, inlineToString inlines)]
     getHeader _ = []
     
-    inlineToString :: [Inline] -> String
-    inlineToString = query getString
-    
-    getString :: Inline -> String
-    getString (Str s) = T.unpack s
-    getString Space = " "
-    getString (Code _ s) = T.unpack s
-    getString _ = ""
-    
     makeSubsection :: (Int, String, String) -> Maybe Section
     makeSubsection (level, anchor, title)
         | level == 2 = Just $ Section anchor title
         | otherwise = Nothing
-
--- Post-process images
-postProcessImages :: Item String -> Compiler (Item String)
-postProcessImages item = return $ fmap processHtml item
-  where
-    processHtml html = replace " />" ">" html
-    replace old new str =
-        case breakOn old str of
-            (before, "") -> before
-            (before, rest) -> before ++ new ++ replace old new (drop (length old) rest)
-    breakOn needle haystack = go needle haystack []
-      where
-        go ndl [] acc = (reverse acc, [])
-        go ndl hstk acc
-            | ndl `isPrefixOf` hstk = (reverse acc, hstk)
-            | otherwise = case hstk of
-                (x:xs) -> go ndl xs (x:acc)
-                [] -> (reverse acc, [])
-
--- Post-process chapters list
-postProcessChaptersList :: Item String -> Compiler (Item String)
-postProcessChaptersList item = return $ fmap addChaptersClass item
-  where
-    addChaptersClass = replaceFirst "<ol" "<ol class=\"chapters\""
-    replaceFirst old new str = 
-        case breakOn old str of
-            (before, "") -> before
-            (before, rest) -> before ++ new ++ drop (length old) rest
-    breakOn needle haystack = go needle haystack []
-      where
-        go ndl [] acc = (reverse acc, [])
-        go ndl hstk acc
-            | ndl `isPrefixOf` hstk = (reverse acc, hstk)
-            | otherwise = case hstk of
-                (x:xs) -> go ndl xs (x:acc)
-                [] -> (reverse acc, [])
