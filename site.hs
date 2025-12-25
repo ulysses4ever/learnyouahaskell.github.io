@@ -69,6 +69,7 @@ main = hakyll $ do
     
     -- Templates
     match "config/template.html" $ compile templateBodyCompiler
+    match "config/chapters-toc.html" $ compile templateBodyCompiler
     
     -- Collect all chapters with their metadata
     chapterFiles <- buildChapterList
@@ -89,33 +90,40 @@ main = hakyll $ do
     create ["chapters.html"] $ do
         route idRoute
         compile $ do
-            -- Header and footer content embedded directly
-            let headContent = "# Learn You a Haskell for Great Good! \n\n"
-                footContent = "\nThis work is licensed under a [Creative Commons Attribution-Noncommercial-Share Alike 3.0 Unported License](https://creativecommons.org/licenses/by-nc-sa/3.0/){rel=license} because I couldn't find a license with an even longer name.\n\n"
+            -- Build context with chapter list
+            let subsectionContext = 
+                    field "link" (\item -> do
+                        let s = itemBody item
+                        -- Extract URL from markdown link format: * [title](url)
+                        let urlPart = takeWhile (/= ')') $ drop 1 $ dropWhile (/= '(') s
+                        return urlPart) <>
+                    field "title" (\item -> do
+                        let s = itemBody item
+                        -- Extract title from markdown link format: * [title](url)
+                        let titlePart = takeWhile (/= ']') $ drop 1 $ dropWhile (/= '[') s
+                        return titlePart)
+                
+                makeSubsectionItem :: String -> Item String
+                makeSubsectionItem s = Item (fromFilePath s) s
+                
+                chapterItemContext = 
+                    field "htmlname" (\item -> return $ replaceExtension (chapterFile $ itemBody item) ".html") <>
+                    field "title" (\item -> return $ chapterTitle $ itemBody item) <>
+                    field "number" (\item -> return $ show $ chapterNumber $ itemBody item) <>
+                    listFieldWith "subsections" subsectionContext (\item -> return $ map makeSubsectionItem $ chapterSubsections $ itemBody item)
+                
+                makeChapterItem :: ChapterInfo -> Item ChapterInfo
+                makeChapterItem ch = Item (fromFilePath $ chapterFile ch) ch
+                
+                chaptersCtx = 
+                    listField "chapters" chapterItemContext (return $ map makeChapterItem chapterFiles) <>
+                    constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
+                    defaultContext
             
-            -- Build TOC from all chapters using pre-computed subsections
-            let buildChapterTOC ChapterInfo{chapterFile, chapterNumber, chapterTitle, chapterSubsections} =
-                    let htmlName = replaceExtension chapterFile ".html"
-                        -- Use extra space for single-digit chapters to align TOC entries
-                        sp = if chapterNumber >= 10 then " " else "  "
-                        chapterLine = show chapterNumber ++ "." ++ sp ++ "[" ++ chapterTitle ++ "](" ++ htmlName ++ ")"
-                    in chapterLine : chapterSubsections
-                tocLines = concatMap buildChapterTOC chapterFiles
-                tocContent = unlines tocLines
-                fullContent = headContent ++ tocContent ++ footContent
-            
-            -- Convert markdown to HTML using Pandoc in Compiler monad
-            htmlContent <- unsafeCompiler $ do
-                result <- runIOorExplode $ do
-                    pandocDoc <- readMarkdown customReaderOptions (T.pack fullContent)
-                    writeHtml5String def pandocDoc
-                return (T.unpack result)
-            
-            makeItem htmlContent
-                >>= loadAndApplyTemplate "config/template.html"
-                        (constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
-                         defaultContext)
-                >>= postProcessChaptersList
+            -- Use template to generate content
+            makeItem ""
+                >>= loadAndApplyTemplate "config/chapters-toc.html" chaptersCtx
+                >>= loadAndApplyTemplate "config/template.html" chaptersCtx
     
     -- Generate faq.html
     match "source_md/faq.md" $ do
