@@ -67,8 +67,13 @@ main = hakyll $ do
         , "static/sitemap.xml"
         ]
     
-    -- Template
+    -- Templates
     match "config/template.html" $ compile templateBodyCompiler
+    match "config/chapters-toc.html" $ compile templateBodyCompiler
+    
+    -- Compile chapters_head and chapters_foot as snapshot items for dependency tracking
+    match "source_md/chapters_head.md" $ compile getResourceBody
+    match "source_md/chapters_foot.md" $ compile getResourceBody
     
     -- Collect all chapters with their metadata
     chapterFiles <- buildChapterList
@@ -89,8 +94,9 @@ main = hakyll $ do
     create ["chapters.html"] $ do
         route idRoute
         compile $ do
-            headContent <- unsafeCompiler $ readFile "source_md/chapters_head.md"
-            footContent <- unsafeCompiler $ readFile "source_md/chapters_foot.md"
+            -- Load head and foot content using proper Hakyll dependency tracking
+            headContent <- fmap itemBody $ load "source_md/chapters_head.md"
+            footContent <- fmap itemBody $ load "source_md/chapters_foot.md"
             
             -- Build TOC from all chapters using pre-computed subsections
             let buildChapterTOC ChapterInfo{chapterFile, chapterNumber, chapterTitle, chapterSubsections} =
@@ -103,7 +109,7 @@ main = hakyll $ do
                 tocContent = unlines tocLines
                 fullContent = headContent ++ "\n" ++ tocContent ++ "\n" ++ footContent
             
-            -- Convert markdown to HTML using Pandoc directly
+            -- Convert markdown to HTML using Pandoc in Compiler monad
             htmlContent <- unsafeCompiler $ do
                 result <- runIOorExplode $ do
                     pandocDoc <- readMarkdown customReaderOptions (T.pack fullContent)
