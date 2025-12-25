@@ -3,6 +3,7 @@
 # Hakyll
 _site/
 _cache/
+_tmp/
 dist-newstyle/
 site
 

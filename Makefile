@@ -11,7 +11,7 @@ site: site.hs lyah-site.cabal
 	cp $$(cabal list-bin site) ./site
 
 clean:
-	rm -rf _site _hakyll_cache _hakyll_tmp
+	rm -rf _site _cache _tmp
 	cabal clean
 	rm -f site
 
@@ -30,7 +30,7 @@ nix-site: nix-build
 	./site build
 
 nix-clean:
-	rm -rf result _site _hakyll_cache _hakyll_tmp
+	rm -rf result _site _cache _tmp
 	rm -f site
 
 # end
