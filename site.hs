@@ -21,13 +21,13 @@ data ChapterInfo = ChapterInfo
     { chapterFile :: FilePath
     , chapterNumber :: Int
     , chapterTitle :: String
-    , chapterSubsections :: [Section]
+    , chapterSections :: [Section]
     }
 
--- Data type for subsection with anchor and title
+-- Data type for section with anchor and title
 data Section = Section
-    { subsectionAnchor :: String
-    , subsectionTitle :: String
+    { sectionAnchor :: String
+    , sectionTitle :: String
     }
 
 -- Helper function to pair each element with its previous and next elements
@@ -105,27 +105,27 @@ main = hakyll $ do
     create ["chapters.html"] $ do
         route idRoute
         compile $ do
-            -- Build context with chapter list using structured subsection data
-            -- Use a tuple to pass both chapter info and subsection to the context
-            let subsectionContext = 
+            -- Build context with chapter list using structured section data
+            -- Use a tuple to pass both chapter info and section to the context
+            let sectionContext = 
                     field "link" (\item -> do
-                        let (chFile, subsec) = itemBody item
-                        -- Build full URL from chapter file and subsection anchor
-                        return $ replaceExtension chFile ".html" ++ "#" ++ subsectionAnchor subsec) <>
+                        let (chFile, sec) = itemBody item
+                        -- Build full URL from chapter file and section anchor
+                        return $ replaceExtension chFile ".html" ++ "#" ++ sectionAnchor sec) <>
                     field "title" (\item -> do
-                        let (_, subsec) = itemBody item
-                        return $ subsectionTitle subsec)
+                        let (_, sec) = itemBody item
+                        return $ sectionTitle sec)
                 
-                makeSubsectionItem :: ChapterInfo -> Section -> Item (FilePath, Section)
-                makeSubsectionItem ch subsec = Item (fromFilePath $ chapterFile ch) (chapterFile ch, subsec)
+                makeSectionItem :: ChapterInfo -> Section -> Item (FilePath, Section)
+                makeSectionItem ch sec = Item (fromFilePath $ chapterFile ch) (chapterFile ch, sec)
                 
                 chapterItemContext = 
                     field "htmlname" (return . flip replaceExtension ".html" . chapterFile . itemBody) <>
                     field "title" (return . chapterTitle . itemBody) <>
                     field "number" (return . show . chapterNumber . itemBody) <>
-                    listFieldWith "subsections" subsectionContext (\item -> 
+                    listFieldWith "sections" sectionContext (\item -> 
                         let ch = itemBody item
-                        in return $ map (makeSubsectionItem ch) $ chapterSubsections ch)
+                        in return $ map (makeSectionItem ch) $ chapterSections ch)
                 
                 makeChapterItem :: ChapterInfo -> Item ChapterInfo
                 makeChapterItem ch = Item (fromFilePath $ chapterFile ch) ch
@@ -168,7 +168,7 @@ buildChapterList = preprocess $ do
         
         -- Extract chapter number and other metadata from Pandoc's parsed metadata
         pandoc <- runIO $ readMarkdown customReaderOptions (T.pack content)
-        (order, title, subsections) <- case pandoc of
+        (order, title, sections) <- case pandoc of
             Right pandocDoc@(Pandoc meta blocks) -> do
                 let htmlName = replaceExtension fname ".html"
                     -- Helper to parse chapter number from MetaValue
@@ -182,8 +182,8 @@ buildChapterList = preprocess $ do
                         Just (MetaString chapterStr) -> parseChapterNumber chapterStr
                         _ -> error $ "No chapter field in YAML metadata in: " ++ fullPath
                     title = extractFirstHeading blocks
-                    subsections = extractTOCFromPandoc htmlName pandocDoc
-                return (order, title, subsections)
+                    sections = extractTOCFromPandoc htmlName pandocDoc
+                return (order, title, sections)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
         
         -- Return chapter info
@@ -191,7 +191,7 @@ buildChapterList = preprocess $ do
             { chapterFile = fname
             , chapterNumber = order
             , chapterTitle = title
-            , chapterSubsections = subsections
+            , chapterSections = sections
             }
     
     isFaqOrHelper :: FilePath -> Bool
@@ -216,14 +216,14 @@ extractFirstHeading blocks =
 extractTOCFromPandoc :: String -> Pandoc -> [Section]
 extractTOCFromPandoc htmlName (Pandoc _ blocks) =
     let headers = query getHeader blocks
-    in mapMaybe makeSubsection headers
+    in mapMaybe makeSection headers
   where
     getHeader :: Block -> [(Int, String, String)]
     getHeader (Header level (anchor, _, _) inlines) =
         [(level, T.unpack anchor, inlineToString inlines)]
     getHeader _ = []
     
-    makeSubsection :: (Int, String, String) -> Maybe Section
-    makeSubsection (level, anchor, title)
+    makeSection :: (Int, String, String) -> Maybe Section
+    makeSection (level, anchor, title)
         | level == 2 = Just $ Section anchor title
         | otherwise = Nothing
