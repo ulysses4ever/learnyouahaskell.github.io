@@ -143,8 +143,8 @@ buildChapterList = preprocess $ do
                             order = case reads (T.unpack chapterStr) of
                                 [(n, "")] -> n
                                 _ -> error $ "Invalid chapter number in " ++ fullPath
-                            -- Extract title from metadata and strip any Pandoc attribute syntax
-                            title = stripAttributeSyntax $ case M.lookup "title" (unMeta meta) of
+                            -- Extract title from metadata
+                            title = case M.lookup "title" (unMeta meta) of
                                 Just (MetaInlines inlines) -> T.unpack $ stringify inlines
                                 Just (MetaString s) -> T.unpack s
                                 _ -> error $ "No title found in " ++ fullPath
@@ -161,7 +161,6 @@ buildChapterList = preprocess $ do
 -- Helper function to build chapter context with optional prev/next navigation
 chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> Context String
 chapterCtx mprev mnext =
-    cleanTitleField <>  -- Override title field first to strip attributes
     constField "footdiv" "true" <>
     maybeChapterContext "prev" mprev <>
     maybeChapterContext "next" mnext <>
@@ -172,13 +171,6 @@ chapterCtx mprev mnext =
         maybe mempty (\ChapterInfo{chapterFile, chapterTitle} ->
             constField (prefix ++ "_filename") (replaceExtension chapterFile ".html") <>
             constField (prefix ++ "_title") chapterTitle) mchapter
-    
-    -- Custom title field that strips Pandoc attribute syntax
-    cleanTitleField :: Context String
-    cleanTitleField = field "title" $ \item -> do
-        metadata <- getMetadata (itemIdentifier item)
-        let rawTitle = lookupString "title" metadata
-        return $ maybe "" stripAttributeSyntax rawTitle
 
 -- Custom pandoc compiler that uses our custom reader options
 customPandocCompiler :: Compiler (Item String)
@@ -203,19 +195,3 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) = query getSection blocks
 -- Helper function to pair each element with its previous and next elements
 zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
 zipPrevNext xs = zip3 (Nothing : map Just xs) xs (map Just (tail xs) ++ [Nothing])
-
--- Remove Pandoc attribute syntax from a title string
--- This strips patterns like {style=margin-left:-2px} from titles
-stripAttributeSyntax :: String -> String
-stripAttributeSyntax [] = []
-stripAttributeSyntax s 
-    | not (null s) && last s == '}' && '{' `elem` s =
-        let reversed = reverse s
-            -- Drop the closing brace and everything until opening brace
-            stripped = case dropWhile (/= '}') reversed of
-                ('}':rest) -> case dropWhile (/= '{') rest of
-                    ('{':remaining) -> T.unpack $ T.strip $ T.pack $ reverse remaining
-                    _ -> s  -- No matching opening brace, return original
-                _ -> s  -- No closing brace, return original
-        in stripped
-    | otherwise = s
