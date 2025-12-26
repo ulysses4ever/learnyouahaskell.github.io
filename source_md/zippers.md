@@ -22,7 +22,7 @@ If we want to later change an element that's near the element that we previously
 In this chapter, we'll see how we can take some data structure and focus on a part of it in a way that makes changing its elements easy and walking around it efficient.
 Nice!
 
-## Taking a walk {#taking-a-walk}
+# Taking a walk {#taking-a-walk}
 
 Like we've learned in biology class, there are many different kinds of trees, so let's pick a seed that we will use to plant ours.
 Here it is:
@@ -134,7 +134,7 @@ What a drag.
 
 In the next section, we'll find a better way of focusing on a subtree, one that allows us to efficiently switch focus to subtrees that are nearby.
 
-## A trail of breadcrumbs {#a-trail-of-breadcrumbs}
+# A trail of breadcrumbs {#a-trail-of-breadcrumbs}
 
 ![whoop dee doo](assets/images/zippers/bread.png){.right width=321 height=250}
 
@@ -355,7 +355,7 @@ If our trail of beefed up breadcrumbs is empty, this means that we're already at
 Otherwise, we go up to get the focus of the parent node and then recursively apply `topMost` to that.
 So now we can walk around our tree, going left and right and up, applying `modify` and `attach` as we go along and then when we're done with our modifications, we use `topMost` to focus on the root of our tree and see the changes that we've done in proper perspective.
 
-## Focusing on lists {#focusing-on-lists}
+# Focusing on lists {#focusing-on-lists}
 
 Zippers can be used with pretty much any data structure, so it's no surprise that they can be used to focus on sub-lists of lists.
 After all, lists are pretty much like trees, only where a node in a tree has an element (or not) and several subtrees, a node in a list has an element and only a single sub-list.
@@ -429,7 +429,7 @@ This also makes it easier to see why we call this a zipper, because this really 
 If you were making a text editor, you could use a list of strings to represent the lines of text that are currently opened and you could then use a zipper so that you know which line the cursor is currently focused on.
 By using a zipper, it would also make it easier to insert new lines anywhere in the text or delete existing ones.
 
-## A very simple file system {#a-very-simple-file-system}
+# A very simple file system {#a-very-simple-file-system}
 
 Now that we know how zippers work, let's use trees to represent a very simple file system and then make a zipper for that file system, which will allow us to move between folders, just like we usually do when jumping around our file system.
 
@@ -621,7 +621,7 @@ So by using zippers, we get versioning for free, meaning that we can always refe
 This isn't unique to zippers, but is a property of Haskell because its data structures are immutable.
 With zippers however, we get the ability to easily and efficiently walk around our data structures, so the persistence of Haskell's data structures really begins to shine.
 
-## Watch your step {#watch-your-step}
+# Watch your step {#watch-your-step}
 
 So far, while walking through our data structures, whether they were binary trees, lists or file systems, we didn't really care if we took a step too far and fell off.
 For instance, our `goLeft` function takes a zipper of a binary tree and moves the focus to its left subtree:

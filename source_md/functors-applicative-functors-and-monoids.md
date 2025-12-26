@@ -18,7 +18,7 @@ That's an example of a useful and yet still pretty abstract property that typecl
 In this chapter, we'll take a closer look at functors, along with slightly stronger and more useful versions of functors called applicative functors.
 We'll also take a look at monoids, which are sort of like socks.
 
-## Functors redux {#functors-redux}
+# Functors redux {#functors-redux}
 
 ![frogs dont even need money](assets/images/functors-applicative-functors-and-monoids/frogtor.png){.right width=369 height=243}
 
@@ -425,7 +425,7 @@ Looking at it this way gives us some intuition as to why using `fmap` on functio
 The result is still a function, only when we give it a number, it will be multiplied by three and then it will go through the attached transformation where it will be added to three.
 This is what happens with composition.
 
-## Applicative functors {#applicative-functors}
+# Applicative functors {#applicative-functors}
 
 ![disregard this analogy](assets/images/functors-applicative-functors-and-monoids/present.png){.right width=302 height=284}
 
@@ -1119,7 +1119,7 @@ We won't go over them in detail right now because that would take up a lot of pa
 In conclusion, applicative functors aren't just interesting, they're also useful, because they allow us to combine different computations, such as I/O computations, non-deterministic computations, computations that might have failed, etc. by using the applicative style.
 Just by using `<$>` and `<*>` we can use normal functions to uniformly operate on any number of applicative functors and take advantage of the semantics of each one.
 
-## The newtype keyword {#the-newtype-keyword}
+# The newtype keyword {#the-newtype-keyword}
 
 ![why_ so serious?](assets/images/functors-applicative-functors-and-monoids/maoi.png){.left width=107 height=202}
 
@@ -1429,7 +1429,7 @@ If you just want your type signatures to look cleaner and be more descriptive, y
 If you want to take an existing type and wrap it in a new type in order to make it an instance of a type class, chances are you're looking for a *newtype*.
 And if you want to make something completely new, odds are good that you're looking for the *data* keyword.
 
-## Monoids {#monoids}
+# Monoids {#monoids}
 
 ![wow this is pretty much the gayest pirate ship
 ever](assets/images/functors-applicative-functors-and-monoids/pirateship.png){.right width=460 height=417}

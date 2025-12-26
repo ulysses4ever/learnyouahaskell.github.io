@@ -21,7 +21,7 @@ The `mtl` package comes with the Haskell Platform, so you probably already have 
 To check if you do, type `ghc-pkg list` in the command-line.
 This will show which Haskell packages you have installed and one of them should be `mtl`, followed by a version number.
 
-## Writer? I hardly know her! {#writer}
+# Writer? I hardly know her! {#writer}
 
 We've loaded our gun with the `Maybe` monad, the list monad and the `IO` monad.
 Now let's put the `Writer` monad in the chamber and see what happens when we fire it!
@@ -623,7 +623,7 @@ Of course, this is not the proper and scientific way to test how fast our progra
 Oh, by the way, the song Final Countdown by Europe is now stuck in your head.
 Enjoy!
 
-## Reader? Ugh, not this joke again. {#reader}
+# Reader? Ugh, not this joke again. {#reader}
 
 ![bang youre dead](assets/images/for-a-few-monads-more/revolver.png){.left width=280 height=106}
 
@@ -725,7 +725,7 @@ We can act as if we already know what the functions will return.
 It does this by gluing functions together into one function and then giving that function's parameter to all of the functions that it was glued from.
 So if we have a lot of functions that are all just missing one parameter and they'd eventually be applied to the same thing, we can use the reader monad to sort of extract their future results and the `>>=` implementation will make sure that it all works out.
 
-## Tasteful stateful computations {#state}
+# Tasteful stateful computations {#state}
 
 ![don't jest with texas](assets/images/for-a-few-monads-more/texas.png){.left width=244 height=230}
 
@@ -1065,7 +1065,7 @@ ghci> runState threeCoins (mkStdGen 33)
 Nice.
 Doing these sort of things that require some state to be kept in between steps just became much less of a hassle!
 
-## Error error on the wall {#error}
+# Error error on the wall {#error}
 
 We know by now that `Maybe` is used to add a context of possible failure to values.
 A value can be a `Just something` or a `Nothing`.
@@ -1158,7 +1158,7 @@ Other than this little hangup, using this monad is very similar to using `Maybe`
 In the previous chapter, we used the monadic aspects of `Maybe` to simulate birds landing on the balancing pole of a tightrope walker.
 As an exercise, you can rewrite that with the error monad so that when the tightrope walker slips and falls, we remember how many birds were on each side of the pole when he fell.
 
-## Some useful monadic functions {#useful-monadic-functions}
+# Some useful monadic functions {#useful-monadic-functions}
 
 In this section, we're going to explore a few functions that either operate on monadic values or return monadic values as their results (or both!).
 Such functions are usually referred to as monadic functions.
@@ -1784,7 +1784,7 @@ canReachIn :: Int -> KnightPos -> KnightPos -> Bool
 canReachIn x start end = end `elem` inMany x start
 ```
 
-## Making monads {#making-monads}
+# Making monads {#making-monads}
 
 ![kewl](assets/images/for-a-few-monads-more/spearhead.png){.center width=780 height=244}
 

@@ -11,7 +11,7 @@ Higher order functions aren't just a part of the Haskell experience, they pretty
 It turns out that if you want to define computations by defining what stuff *is* instead of defining steps that change some state and maybe looping them, higher order functions are indispensable.
 They're a really powerful way of solving problems and thinking about programs.
 
-## Curried functions {#curried-functions}
+# Curried functions {#curried-functions}
 
 Every function in Haskell officially only takes one parameter.
 So how is it possible that we defined and used several functions that take more than one parameter so far?
@@ -145,7 +145,7 @@ Functions aren't instances of the `Show` typeclass, so we can't get a neat strin
 When we do, say, `1 + 1` at the GHCI prompt, it first calculates that to `2` and then calls `show` on `2` to get a textual representation of that number.
 And the textual representation of `2` is just the string `"2"`, which then gets printed to our screen.
 
-## Some higher-orderism is in order {#higher-orderism}
+# Some higher-orderism is in order {#higher-orderism}
 
 Functions can take functions as parameters and also return functions.
 To illustrate this, we're going to make a function that takes a function and then applies it twice to something!
@@ -271,7 +271,7 @@ ghci> zipWith (flip' div) [2,2..] [10,8,6,4,2]
 [5,4,3,2,1]
 ```
 
-## Maps and filters {#maps-and-filters}
+# Maps and filters {#maps-and-filters}
 
 `map`{.function .label} takes a function and a list and applies that function to every element in the list, producing a new list.
 Let's see what its type signature is and how it's defined.
@@ -485,7 +485,7 @@ Getting the element with the index `4` from our list returns a function that's e
 And then, we just apply `5` to that function.
 So that's like writing `(4*) 5` or just `4 * 5`.
 
-## Lambdas {#lambdas}
+# Lambdas {#lambdas}
 
 ![lambda](assets/images/higher-order-functions/lambda.png){.right width=203 height=230}
 
@@ -557,7 +557,7 @@ Even though that's the same as writing `flip' f x y = f y x`, we make it obvious
 The most common use case with `flip` is calling it with just the function parameter and then passing the resulting function on to a map or a filter.
 So use lambdas in this way when you want to make it explicit that your function is mainly meant to be partially applied and passed on to a function as a parameter.
 
-## Only folds and horses {#folds}
+# Only folds and horses {#folds}
 
 ![folded bird](assets/images/higher-order-functions/origami.png){.right width=220 height=221}
 
@@ -770,7 +770,7 @@ ghci> sum (map sqrt [1..130])
 We use `takeWhile` here instead of `filter` because `filter` doesn't work on infinite lists.
 Even though we know the list is ascending, `filter` doesn't, so we use `takeWhile` to cut the scanlist off at the first occurrence of a sum greater than 1000.
 
-## Function application with $ {#function-application}
+# Function application with $ {#function-application}
 
 Alright, next up, we'll take a look at the `$` function, also called *function application*.
 First of all, let's check out how it's defined:
@@ -811,7 +811,7 @@ ghci> map ($ 3) [(4+), (10*), (^2), sqrt]
 [7.0,30.0,9.0,1.7320508075688772]
 ```
 
-## Function composition {#composition}
+# Function composition {#composition}
 
 In mathematics, function composition is defined like this: ![ (f . g)(x) = f(g(x))](assets/images/higher-order-functions/composition.png), meaning that composing two functions produces a new function that, when called with a parameter, say, *x* is the equivalent of calling *g* with the parameter *x* and then calling the *f* with that result.
 

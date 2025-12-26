@@ -3,7 +3,7 @@ chapter: 2
 title: "Starting Out {style=margin-left:-3px}"
 ---
 
-## Ready, set, go! {#ready-set-go}
+# Ready, set, go! {#ready-set-go}
 
 ![egg](assets/images/starting-out/startingout.png){.right width=214 height=187}
 Alright, let's get started!
@@ -174,7 +174,7 @@ So if you see something like `bar (bar 3)`, it doesn't mean that `bar` is called
 It means that we first call the function `bar` with `3` as the parameter to get some number and then we call `bar` again with that number.
 In C, that would be something like `bar(bar(3))`.
 
-## Baby's first functions {#babys-first-functions}
+# Baby's first functions {#babys-first-functions}
 
 In the previous section we got a basic feel for calling functions.
 Now let's try making our own!
@@ -281,7 +281,7 @@ The second thing is that this function doesn't take any parameters.
 When a function doesn't take any parameters, we usually say it's a *definition* (or a *name*).
 Because we can't change what names (and functions) mean once we've defined them, `conanO'Brien` and the string `"It's a-me, Conan O'Brien!"` can be used interchangeably.
 
-## An intro to lists {#an-intro-to-lists}
+# An intro to lists {#an-intro-to-lists}
 
 ![BUY A DOG](assets/images/starting-out/list.png){.left width=150 height=103}
 Much like shopping lists in the real world, lists in Haskell are very useful.
@@ -533,7 +533,7 @@ False
 Those were a few basic functions that operate on lists.
 We'll take a look at more list functions [later](modules.html#data-list).
 
-## Texas ranges {#texas-ranges}
+# Texas ranges {#texas-ranges}
 
 ![draw](assets/images/starting-out/cowboy.png){.right width=200 height=258}
 What if we want a list of all numbers between 1 and 20?
@@ -621,7 +621,7 @@ ghci> take 10 (repeat 5)
 Although it's simpler to just use the `replicate`{.label .function} function if you want some number of the same element in a list.
 `replicate 3 10` returns `[10,10,10]`.
 
-## I'm a list comprehension {#im-a-list-comprehension}
+# I'm a list comprehension {#im-a-list-comprehension}
 
 ![frog](assets/images/starting-out/kermit.png){.left width=180 height=156}
 If you've ever taken a course in mathematics, you've probably run into *set comprehensions*.
@@ -763,7 +763,7 @@ ghci> [ [ x | x <- xs, even x ] | xs <- xxs]
 You can write list comprehensions across several lines.
 So if you're not in GHCI, it's better to split longer list comprehensions across multiple lines, especially if they're nested.
 
-## Tuples {#tuples}
+# Tuples {#tuples}
 
 ![tuples](assets/images/starting-out/tuple.png){.right width=160 height=162}
 
