@@ -14,7 +14,7 @@ import Text.Pandoc.Options (def, readerExtensions, writerExtensions, Extension(E
 import Text.Pandoc.Extensions (disableExtension)
 import System.Directory (listDirectory)
 import Control.Monad (forM_, forM)
-import System.FilePath ((</>), replaceExtension, takeBaseName, takeFileName, takeExtension)
+import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
 
 -- Data type for chapter metadata
 data ChapterInfo = ChapterInfo
@@ -133,7 +133,7 @@ buildChapterList = preprocess $ do
                             title = case M.lookup "title" (unMeta meta) of
                                 Just (MetaInlines inlines) -> query getInlineStr inlines
                                 Just (MetaString s) -> T.unpack s
-                                _ -> ""
+                                _ -> error $ "No title found in " ++ fullPath
                             sections = extractTOCFromPandoc htmlName pandocDoc
                         return $ Just ChapterInfo
                             { chapterFile = fname
@@ -143,12 +143,13 @@ buildChapterList = preprocess $ do
                             }
                     _ -> return Nothing  -- Not a chapter file (e.g., FAQ)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
-      where
-        getInlineStr :: Inline -> String
-        getInlineStr (Str s) = T.unpack s
-        getInlineStr Space = " "
-        getInlineStr (Code _ s) = T.unpack s
-        getInlineStr _ = ""
+    
+    -- Helper to extract string from Pandoc Inline elements
+    getInlineStr :: Inline -> String
+    getInlineStr (Str s) = T.unpack s
+    getInlineStr Space = " "
+    getInlineStr (Code _ s) = T.unpack s
+    getInlineStr _ = ""
 
 -- Helper function to build chapter context with optional prev/next navigation
 chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
@@ -185,6 +186,7 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) = query getSection blocks
         [Section (T.unpack anchor) (query getInlineStr inlines)]
     getSection _ = []
     
+    -- Helper to extract string from Pandoc Inline elements
     getInlineStr :: Inline -> String
     getInlineStr (Str s) = T.unpack s
     getInlineStr Space = " "
