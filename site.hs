@@ -161,6 +161,7 @@ buildChapterList = preprocess $ do
 -- Helper function to build chapter context with optional prev/next navigation
 chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> Context String
 chapterCtx mprev mnext =
+    cleanTitleField <>  -- Override title field first to strip attributes
     constField "footdiv" "true" <>
     maybeChapterContext "prev" mprev <>
     maybeChapterContext "next" mnext <>
@@ -171,6 +172,13 @@ chapterCtx mprev mnext =
         maybe mempty (\ChapterInfo{chapterFile, chapterTitle} ->
             constField (prefix ++ "_filename") (replaceExtension chapterFile ".html") <>
             constField (prefix ++ "_title") chapterTitle) mchapter
+    
+    -- Custom title field that strips Pandoc attribute syntax
+    cleanTitleField :: Context String
+    cleanTitleField = field "title" $ \item -> do
+        metadata <- getMetadata (itemIdentifier item)
+        let rawTitle = lookupString "title" metadata
+        return $ maybe "" stripAttributeSyntax rawTitle
 
 -- Custom pandoc compiler that uses our custom reader options
 customPandocCompiler :: Compiler (Item String)
