@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NamedFieldPuns #-}
 import Hakyll
-import Data.List (sortOn, find)
+import Data.List (sortOn)
 import Data.Maybe (fromMaybe, mapMaybe, listToMaybe, catMaybes)
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -14,7 +14,7 @@ import Text.Pandoc.Options (def, readerExtensions, writerExtensions, Extension(E
 import Text.Pandoc.Extensions (disableExtension)
 import System.Directory (listDirectory)
 import Control.Monad (forM_, forM)
-import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
+import System.FilePath ((</>), replaceExtension, takeBaseName, takeFileName, takeExtension)
 
 -- Data type for chapter metadata
 data ChapterInfo = ChapterInfo
@@ -31,7 +31,7 @@ data Section = Section
     }
 
 -- Helper route to strip source_md/ directory and set .html extension
-stripSourceMdRoute :: Routes
+stripSourceMdRoute :: Route
 stripSourceMdRoute = customRoute (takeFileName . toFilePath) `composeRoutes` setExtension "html"
 
 main :: IO ()
@@ -109,8 +109,7 @@ main = hakyll $ do
 buildChapterList :: Rules [ChapterInfo]
 buildChapterList = preprocess $ do
     files <- listDirectory "source_md"
-    let mdFiles = filter (\f -> takeExtension f == ".md") files
-    maybeChapters <- mapM getChapterData mdFiles
+    maybeChapters <- mapM getChapterData files
     return $ sortOn chapterNumber (catMaybes maybeChapters)
   where
     getChapterData :: FilePath -> IO (Maybe ChapterInfo)
@@ -130,7 +129,11 @@ buildChapterList = preprocess $ do
                             order = case reads (T.unpack chapterStr) of
                                 [(n, "")] -> n
                                 _ -> error $ "Invalid chapter number in " ++ fullPath
-                            title = extractFirstHeading blocks
+                            -- Extract title from metadata
+                            title = case M.lookup "title" (unMeta meta) of
+                                Just (MetaInlines inlines) -> query getInlineStr inlines
+                                Just (MetaString s) -> T.unpack s
+                                _ -> ""
                             sections = extractTOCFromPandoc htmlName pandocDoc
                         return $ Just ChapterInfo
                             { chapterFile = fname
@@ -140,6 +143,12 @@ buildChapterList = preprocess $ do
                             }
                     _ -> return Nothing  -- Not a chapter file (e.g., FAQ)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
+      where
+        getInlineStr :: Inline -> String
+        getInlineStr (Str s) = T.unpack s
+        getInlineStr Space = " "
+        getInlineStr (Code _ s) = T.unpack s
+        getInlineStr _ = ""
 
 -- Helper function to build chapter context with optional prev/next navigation
 chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
@@ -167,34 +176,20 @@ customReaderOptions = defaultHakyllReaderOptions
                       (readerExtensions defaultHakyllReaderOptions)
   }
 
--- Extract first heading from Pandoc blocks
-extractFirstHeading :: [Block] -> String
-extractFirstHeading blocks = 
-    case find isHeader blocks of
-        Just (Header _ _ inlines) -> inlineToString inlines
-        _ -> ""
-  where
-    isHeader (Header 1 _ _) = True
-    isHeader _ = False
-
 -- Extract TOC from Pandoc document using Pandoc's AST
 extractTOCFromPandoc :: String -> Pandoc -> [Section]
 extractTOCFromPandoc htmlName (Pandoc _ blocks) = query getSection blocks
   where
     getSection :: Block -> [Section]
     getSection (Header 2 (anchor, _, _) inlines) =
-        [Section (T.unpack anchor) (inlineToString inlines)]
+        [Section (T.unpack anchor) (query getInlineStr inlines)]
     getSection _ = []
-
--- Helper to convert Pandoc inlines to string
-inlineToString :: [Inline] -> String
-inlineToString = query getString
-  where
-    getString :: Inline -> String
-    getString (Str s) = T.unpack s
-    getString Space = " "
-    getString (Code _ s) = T.unpack s
-    getString _ = ""
+    
+    getInlineStr :: Inline -> String
+    getInlineStr (Str s) = T.unpack s
+    getInlineStr Space = " "
+    getInlineStr (Code _ s) = T.unpack s
+    getInlineStr _ = ""
 
 -- Helper function to pair each element with its previous and next elements
 zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
