@@ -61,11 +61,11 @@ main = hakyll $ do
     
     -- Process chapter markdown files
     let chapterTriples = zipPrevNext chapterFiles
-    forM_ chapterTriples $ \(mprev, ChapterInfo{chapterFile, chapterTitle}, mnext) -> do
+    forM_ chapterTriples $ \(mprev, ChapterInfo{chapterFile}, mnext) -> do
         match (fromGlob $ sourceMdDir </> chapterFile) $ do
             route stripSourceMdRoute
             compile (customPandocCompiler
-                >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "template.html") (chapterCtx mprev mnext chapterTitle))
+                >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "template.html") (chapterCtx mprev mnext))
     
     -- Generate chapters.html (TOC)
     create ["chapters.html"] $ do
@@ -96,11 +96,10 @@ main = hakyll $ do
                 
                 chaptersCtx = 
                     listField "chapters" chapterItemContext (return $ map makeChapterItem chapterFiles) <>
-                    constField "title" "Chapters - Learn You a Haskell for Great Good!" <>
                     defaultContext
             
-            -- Use template to generate content
-            makeItem ""
+            -- Use template to generate content with YAML frontmatter for title
+            makeItem "---\ntitle: \"Chapters - Learn You a Haskell for Great Good!\"\n---\n"
                 >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "chapters-toc.html") chaptersCtx
                 >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "template.html") chaptersCtx
     
@@ -110,8 +109,7 @@ main = hakyll $ do
         compile $ do
             customPandocCompiler
                 >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "template.html")
-                        (constField "title" "FAQ - Learn You a Haskell for Great Good!" <>
-                         constField "faq" "true" <>
+                        (constField "faq" "true" <>
                          defaultContext)
 
 
@@ -156,9 +154,8 @@ buildChapterList = preprocess $ do
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
 
 -- Helper function to build chapter context with optional prev/next navigation
-chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
-chapterCtx mprev mnext title =
-    constField "title" title <>
+chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> Context String
+chapterCtx mprev mnext =
     constField "footdiv" "true" <>
     maybeChapterContext "prev" mprev <>
     maybeChapterContext "next" mnext <>
