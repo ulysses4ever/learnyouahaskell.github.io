@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NamedFieldPuns #-}
 import Hakyll
-import Data.List (sortOn, find, isPrefixOf)
-import Data.Maybe (fromMaybe, mapMaybe, listToMaybe)
+import Data.List (sortOn, find)
+import Data.Maybe (fromMaybe, mapMaybe, listToMaybe, catMaybes)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Text.Pandoc.Definition
@@ -110,50 +110,36 @@ buildChapterList :: Rules [ChapterInfo]
 buildChapterList = preprocess $ do
     files <- listDirectory "source_md"
     let mdFiles = filter (\f -> takeExtension f == ".md") files
-        chapterFiles = filter (not . isFaqOrHelper) mdFiles
-    chapters <- mapM getChapterData chapterFiles
-    return $ sortOn chapterNumber chapters
+    maybeChapters <- mapM getChapterData mdFiles
+    return $ sortOn chapterNumber (catMaybes maybeChapters)
   where
-    getChapterData :: FilePath -> IO ChapterInfo
+    getChapterData :: FilePath -> IO (Maybe ChapterInfo)
     getChapterData fname = do
         let fullPath = "source_md" </> fname
         content <- readFile fullPath
         
         -- Extract chapter number and other metadata from Pandoc's parsed metadata
         pandoc <- runIO $ readMarkdown customReaderOptions (T.pack content)
-        (order, title, sections) <- case pandoc of
+        case pandoc of
             Right pandocDoc@(Pandoc meta blocks) -> do
-                let htmlName = replaceExtension fname ".html"
-                    -- Helper to parse chapter number from MetaValue
-                    parseChapterNumber :: T.Text -> Int
-                    parseChapterNumber chapterStr = case reads (T.unpack chapterStr) of
-                        [(n, "")] -> n
-                        _ -> error $ "Invalid chapter number in " ++ fullPath
-                    -- Extract chapter number from Pandoc metadata
-                    order = case M.lookup "chapter" (unMeta meta) of
-                        Just (MetaInlines [Str chapterStr]) -> parseChapterNumber chapterStr
-                        Just (MetaString chapterStr) -> parseChapterNumber chapterStr
-                        _ -> error $ "No chapter field in YAML metadata in: " ++ fullPath
-                    title = extractFirstHeading blocks
-                    sections = extractTOCFromPandoc htmlName pandocDoc
-                return (order, title, sections)
+                -- Check if this file has a chapter number in metadata
+                case M.lookup "chapter" (unMeta meta) of
+                    Just (MetaString chapterStr) -> do
+                        let htmlName = replaceExtension fname ".html"
+                            -- Parse chapter number from MetaValue
+                            order = case reads (T.unpack chapterStr) of
+                                [(n, "")] -> n
+                                _ -> error $ "Invalid chapter number in " ++ fullPath
+                            title = extractFirstHeading blocks
+                            sections = extractTOCFromPandoc htmlName pandocDoc
+                        return $ Just ChapterInfo
+                            { chapterFile = fname
+                            , chapterNumber = order
+                            , chapterTitle = title
+                            , chapterSections = sections
+                            }
+                    _ -> return Nothing  -- Not a chapter file (e.g., FAQ)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
-        
-        -- Return chapter info
-        return ChapterInfo
-            { chapterFile = fname
-            , chapterNumber = order
-            , chapterTitle = title
-            , chapterSections = sections
-            }
-    
-    isFaqOrHelper :: FilePath -> Bool
-    isFaqOrHelper fname = "faq.md" `isInfixOf` fname
-      where
-        isInfixOf needle [] = False
-        isInfixOf needle haystack@(x:xs)
-          | needle `isPrefixOf` haystack = True
-          | otherwise = isInfixOf needle xs
 
 -- Helper function to build chapter context with optional prev/next navigation
 chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
