@@ -143,8 +143,8 @@ buildChapterList = preprocess $ do
                             order = case reads (T.unpack chapterStr) of
                                 [(n, "")] -> n
                                 _ -> error $ "Invalid chapter number in " ++ fullPath
-                            -- Extract title from metadata
-                            title = case M.lookup "title" (unMeta meta) of
+                            -- Extract title from metadata and strip any Pandoc attribute syntax
+                            title = stripAttributeSyntax $ case M.lookup "title" (unMeta meta) of
                                 Just (MetaInlines inlines) -> T.unpack $ stringify inlines
                                 Just (MetaString s) -> T.unpack s
                                 _ -> error $ "No title found in " ++ fullPath
@@ -195,3 +195,18 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) = query getSection blocks
 -- Helper function to pair each element with its previous and next elements
 zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
 zipPrevNext xs = zip3 (Nothing : map Just xs) xs (map Just (tail xs) ++ [Nothing])
+
+-- Remove Pandoc attribute syntax from a title string
+-- This strips patterns like {style=margin-left:-2px} from titles
+stripAttributeSyntax :: String -> String
+stripAttributeSyntax s = 
+    let reversed = reverse s
+        -- Drop the closing brace and everything until opening brace
+        stripped = case dropWhile (/= '}') reversed of
+            ('}':rest) -> case dropWhile (/= '{') rest of
+                ('{':remaining) -> reverse remaining
+                _ -> s  -- No matching opening brace, return original
+            _ -> s  -- No closing brace, return original
+    in if '{' `elem` s && '}' `elem` s && last s == '}'
+       then T.unpack $ T.strip $ T.pack stripped
+       else s
