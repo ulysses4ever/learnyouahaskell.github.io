@@ -207,14 +207,15 @@ zipPrevNext xs = zip3 (Nothing : map Just xs) xs (map Just (tail xs) ++ [Nothing
 -- Remove Pandoc attribute syntax from a title string
 -- This strips patterns like {style=margin-left:-2px} from titles
 stripAttributeSyntax :: String -> String
-stripAttributeSyntax s = 
-    let reversed = reverse s
-        -- Drop the closing brace and everything until opening brace
-        stripped = case dropWhile (/= '}') reversed of
-            ('}':rest) -> case dropWhile (/= '{') rest of
-                ('{':remaining) -> reverse remaining
-                _ -> s  -- No matching opening brace, return original
-            _ -> s  -- No closing brace, return original
-    in if '{' `elem` s && '}' `elem` s && last s == '}'
-       then T.unpack $ T.strip $ T.pack stripped
-       else s
+stripAttributeSyntax [] = []
+stripAttributeSyntax s 
+    | not (null s) && last s == '}' && '{' `elem` s =
+        let reversed = reverse s
+            -- Drop the closing brace and everything until opening brace
+            stripped = case dropWhile (/= '}') reversed of
+                ('}':rest) -> case dropWhile (/= '{') rest of
+                    ('{':remaining) -> T.unpack $ T.strip $ T.pack $ reverse remaining
+                    _ -> s  -- No matching opening brace, return original
+                _ -> s  -- No closing brace, return original
+        in stripped
+    | otherwise = s
