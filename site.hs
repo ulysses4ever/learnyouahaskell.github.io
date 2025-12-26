@@ -7,6 +7,7 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Text.Pandoc.Definition
 import Text.Pandoc.Walk (query)
+import Text.Pandoc.Shared (stringify)
 import Text.Pandoc.Class (runIO, runIOorExplode)
 import Text.Pandoc.Readers.Markdown (readMarkdown)
 import Text.Pandoc.Writers.HTML (writeHtml5String)
@@ -131,7 +132,7 @@ buildChapterList = preprocess $ do
                                 _ -> error $ "Invalid chapter number in " ++ fullPath
                             -- Extract title from metadata
                             title = case M.lookup "title" (unMeta meta) of
-                                Just (MetaInlines inlines) -> query getInlineStr inlines
+                                Just (MetaInlines inlines) -> T.unpack $ stringify inlines
                                 Just (MetaString s) -> T.unpack s
                                 _ -> error $ "No title found in " ++ fullPath
                             sections = extractTOCFromPandoc htmlName pandocDoc
@@ -143,13 +144,6 @@ buildChapterList = preprocess $ do
                             }
                     _ -> return Nothing  -- Not a chapter file (e.g., FAQ)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
-    
-    -- Helper to extract string from Pandoc Inline elements
-    getInlineStr :: Inline -> String
-    getInlineStr (Str s) = T.unpack s
-    getInlineStr Space = " "
-    getInlineStr (Code _ s) = T.unpack s
-    getInlineStr _ = ""
 
 -- Helper function to build chapter context with optional prev/next navigation
 chapterCtx :: Maybe ChapterInfo -> Maybe ChapterInfo -> String -> Context String
@@ -183,15 +177,8 @@ extractTOCFromPandoc htmlName (Pandoc _ blocks) = query getSection blocks
   where
     getSection :: Block -> [Section]
     getSection (Header 2 (anchor, _, _) inlines) =
-        [Section (T.unpack anchor) (query getInlineStr inlines)]
+        [Section (T.unpack anchor) (T.unpack $ stringify inlines)]
     getSection _ = []
-    
-    -- Helper to extract string from Pandoc Inline elements
-    getInlineStr :: Inline -> String
-    getInlineStr (Str s) = T.unpack s
-    getInlineStr Space = " "
-    getInlineStr (Code _ s) = T.unpack s
-    getInlineStr _ = ""
 
 -- Helper function to pair each element with its previous and next elements
 zipPrevNext :: [a] -> [(Maybe a, a, Maybe a)]
