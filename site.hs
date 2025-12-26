@@ -21,8 +21,8 @@ import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension, ta
 sourceMdDir :: FilePath
 sourceMdDir = "source_md"
 
-configDir :: FilePath
-configDir = "config"
+templatesDir :: FilePath
+templatesDir = "templates"
 
 staticDir :: FilePath
 staticDir = "static"
@@ -53,8 +53,8 @@ main = hakyll $ do
         compile copyFileCompiler
     
     -- Templates
-    match (fromGlob $ configDir </> "template.html") $ compile templateBodyCompiler
-    match (fromGlob $ configDir </> "chapters-toc.html") $ compile templateBodyCompiler
+    match (fromGlob $ templatesDir </> "template.html") $ compile templateBodyCompiler
+    match (fromGlob $ templatesDir </> "chapters-toc.html") $ compile templateBodyCompiler
     
     -- Collect all chapters with their metadata
     chapterFiles <- buildChapterList
@@ -65,7 +65,7 @@ main = hakyll $ do
         match (fromGlob $ sourceMdDir </> chapterFile) $ do
             route stripSourceMdRoute
             compile (customPandocCompiler
-                >>= loadAndApplyTemplate (fromFilePath $ configDir </> "template.html") (chapterCtx mprev mnext chapterTitle))
+                >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "template.html") (chapterCtx mprev mnext chapterTitle))
     
     -- Generate chapters.html (TOC)
     create ["chapters.html"] $ do
@@ -101,15 +101,15 @@ main = hakyll $ do
             
             -- Use template to generate content
             makeItem ""
-                >>= loadAndApplyTemplate (fromFilePath $ configDir </> "chapters-toc.html") chaptersCtx
-                >>= loadAndApplyTemplate (fromFilePath $ configDir </> "template.html") chaptersCtx
+                >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "chapters-toc.html") chaptersCtx
+                >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "template.html") chaptersCtx
     
     -- Generate faq.html
     match (fromGlob $ sourceMdDir </> "faq.md") $ do
         route stripSourceMdRoute
         compile $ do
             customPandocCompiler
-                >>= loadAndApplyTemplate (fromFilePath $ configDir </> "template.html")
+                >>= loadAndApplyTemplate (fromFilePath $ templatesDir </> "template.html")
                         (constField "title" "FAQ - Learn You a Haskell for Great Good!" <>
                          constField "faq" "true" <>
                          defaultContext)
