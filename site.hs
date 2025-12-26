@@ -15,7 +15,7 @@ import Text.Pandoc.Options (def, readerExtensions, writerExtensions, Extension(E
 import Text.Pandoc.Extensions (disableExtension)
 import System.Directory (listDirectory)
 import Control.Monad (forM_, forM)
-import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
+import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension, takeFileName)
 
 -- Directory paths
 sourceMdDir :: FilePath
@@ -42,7 +42,7 @@ data Section = Section
     }
 
 -- Helper route to strip source_md/ directory and set .html extension
-stripSourceMdRoute :: Route
+stripSourceMdRoute :: Routes
 stripSourceMdRoute = customRoute (takeFileName . toFilePath) `composeRoutes` setExtension "html"
 
 main :: IO ()
