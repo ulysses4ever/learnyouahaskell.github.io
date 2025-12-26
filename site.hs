@@ -17,6 +17,16 @@ import System.Directory (listDirectory)
 import Control.Monad (forM_, forM)
 import System.FilePath ((</>), replaceExtension, takeBaseName, takeExtension)
 
+-- Directory paths
+sourceMdDir :: FilePath
+sourceMdDir = "source_md"
+
+configDir :: FilePath
+configDir = "config"
+
+staticDir :: FilePath
+staticDir = "static"
+
 -- Data type for chapter metadata
 data ChapterInfo = ChapterInfo
     { chapterFile :: FilePath
@@ -38,13 +48,13 @@ stripSourceMdRoute = customRoute (takeFileName . toFilePath) `composeRoutes` set
 main :: IO ()
 main = hakyll $ do
     -- Copy static assets managed by Hakyll
-    match "static/**" $ do
-        route $ gsubRoute "static/" (const "")
+    match (fromGlob $ staticDir </> "**") $ do
+        route $ gsubRoute (staticDir ++ "/") (const "")
         compile copyFileCompiler
     
     -- Templates
-    match "config/template.html" $ compile templateBodyCompiler
-    match "config/chapters-toc.html" $ compile templateBodyCompiler
+    match (fromGlob $ configDir </> "template.html") $ compile templateBodyCompiler
+    match (fromGlob $ configDir </> "chapters-toc.html") $ compile templateBodyCompiler
     
     -- Collect all chapters with their metadata
     chapterFiles <- buildChapterList
@@ -52,10 +62,10 @@ main = hakyll $ do
     -- Process chapter markdown files
     let chapterTriples = zipPrevNext chapterFiles
     forM_ chapterTriples $ \(mprev, ChapterInfo{chapterFile, chapterTitle}, mnext) -> do
-        match (fromGlob $ "source_md" </> chapterFile) $ do
+        match (fromGlob $ sourceMdDir </> chapterFile) $ do
             route stripSourceMdRoute
             compile (customPandocCompiler
-                >>= loadAndApplyTemplate "config/template.html" (chapterCtx mprev mnext chapterTitle))
+                >>= loadAndApplyTemplate (fromFilePath $ configDir </> "template.html") (chapterCtx mprev mnext chapterTitle))
     
     -- Generate chapters.html (TOC)
     create ["chapters.html"] $ do
@@ -91,15 +101,15 @@ main = hakyll $ do
             
             -- Use template to generate content
             makeItem ""
-                >>= loadAndApplyTemplate "config/chapters-toc.html" chaptersCtx
-                >>= loadAndApplyTemplate "config/template.html" chaptersCtx
+                >>= loadAndApplyTemplate (fromFilePath $ configDir </> "chapters-toc.html") chaptersCtx
+                >>= loadAndApplyTemplate (fromFilePath $ configDir </> "template.html") chaptersCtx
     
     -- Generate faq.html
-    match "source_md/faq.md" $ do
+    match (fromGlob $ sourceMdDir </> "faq.md") $ do
         route stripSourceMdRoute
         compile $ do
             customPandocCompiler
-                >>= loadAndApplyTemplate "config/template.html"
+                >>= loadAndApplyTemplate (fromFilePath $ configDir </> "template.html")
                         (constField "title" "FAQ - Learn You a Haskell for Great Good!" <>
                          constField "faq" "true" <>
                          defaultContext)
@@ -109,13 +119,13 @@ main = hakyll $ do
 -- Build list of chapters sorted by chapter number from YAML metadata
 buildChapterList :: Rules [ChapterInfo]
 buildChapterList = preprocess $ do
-    files <- listDirectory "source_md"
+    files <- listDirectory sourceMdDir
     maybeChapters <- mapM getChapterData files
     return $ sortOn chapterNumber (catMaybes maybeChapters)
   where
     getChapterData :: FilePath -> IO (Maybe ChapterInfo)
     getChapterData fname = do
-        let fullPath = "source_md" </> fname
+        let fullPath = sourceMdDir </> fname
         content <- readFile fullPath
         
         -- Extract chapter number and other metadata from Pandoc's parsed metadata
