@@ -1,15 +1,14 @@
 ---
 chapter: 10
+title: "Functionally Solving Problems"
 ---
-
-# Functionally Solving Problems 
 
 In this chapter, we'll take a look at a few interesting problems and how to think functionally to solve them as elegantly as possible.
 We probably won't be introducing any new concepts, we'll just be flexing our newly acquired Haskell muscles and practicing our coding skills.
 Each section will present a different problem.
 First we'll describe the problem, then we'll try and find out what the best (or least bad) way of solving it is.
 
-## Reverse Polish notation calculator {#reverse-polish-notation-calculator}
+# Reverse Polish notation calculator {#reverse-polish-notation-calculator}
 
 Usually when we write mathematical expressions in school, we write them in an infix manner.
 For instance, we write `10 - (4 + 3) * 2`.
@@ -223,7 +222,7 @@ We could make one right now, but it would be a bit tedious because it would invo
 If you're feeling up to the challenge though, you can go ahead and try it!
 Hint: you can use `reads` to see if a read was successful or not.
 
-## Heathrow to London {#heathrow-to-london}
+# Heathrow to London {#heathrow-to-london}
 
 Our next problem is this: your plane has just landed in England and you rent a car.
 You have a meeting really soon and you have to get from Heathrow Airport to London as fast as you can (but safely!).

@@ -1,10 +1,9 @@
 ---
 chapter: 1
+title: "Introduction"
 ---
 
-# Introduction 
-
-## About this tutorial {#about-this-tutorial}
+# About this tutorial {#about-this-tutorial}
 
 Welcome to **Learn You a Haskell for Great Good**!
 If you're reading this, chances are you want to learn Haskell.
@@ -32,7 +31,7 @@ I guess what I'm trying to say is: Haskell is great and if you're interested in 
 Learning Haskell is much like learning to program for the first time --- it's fun!
 It forces you to think differently, which brings us to the next section ...
 
-## So what's Haskell? {#so-whats-haskell}
+# So what's Haskell? {#so-whats-haskell}
 
 ![fx](assets/images/introduction/fx.png){.right width=150 height=146}
 Haskell is a **purely functional programming language**.
@@ -86,7 +85,7 @@ Haskell was made by some **really smart folk** (with PhDs).
 Work on Haskell began in 1987 when a committee of researchers got together to design a kick-ass language.
 In 2003 the Haskell Report was published, which defines a stable version of the language.
 
-## What you need to dive in {#what-you-need}
+# What you need to dive in {#what-you-need}
 
 A text editor and a Haskell compiler.
 You probably already have your favorite text editor installed so we won't waste time on that.

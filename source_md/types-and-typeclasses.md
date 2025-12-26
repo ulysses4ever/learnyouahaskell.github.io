@@ -1,10 +1,9 @@
 ---
 chapter: 3
+title: "Types and Typeclasses"
 ---
 
-# Types and Typeclasses 
-
-## Believe the type {#believe-the-type}
+# Believe the type {#believe-the-type}
 
 ![moo](assets/images/types-and-typeclasses/cow.png){.left width=180 height=127}
 
@@ -145,7 +144,7 @@ A list of characters is a string.
 Tuples are types but they are dependent on their length as well as the types of their components, so there is theoretically an infinite number of tuple types, which is too many to cover in this tutorial.
 Note that the empty tuple `()`{.label .type} is also a type which can only have a single value: `()`
 
-## Type variables {#type-variables}
+# Type variables {#type-variables}
 
 What do you think is the type of the `head` function?
 Because `head` takes a list of any type and returns the first element, so what could it be?
@@ -183,7 +182,7 @@ That's why we can use `fst` on a pair that contains any two types.
 Note that just because `a` and `b` are different type variables, they don't have to be different types.
 It just states that the first component's type and the return value's type are the same.
 
-## Typeclasses 101 {#typeclasses-101}
+# Typeclasses 101 {#typeclasses-101}
 
 ![class](assets/images/types-and-typeclasses/classes.png){.right width=210 height=158}
 
