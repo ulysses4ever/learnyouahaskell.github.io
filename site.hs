@@ -132,8 +132,13 @@ buildChapterList = preprocess $ do
             Right pandocDoc@(Pandoc meta blocks) -> do
                 -- Check if this file has a chapter number in metadata
                 case M.lookup "chapter" (unMeta meta) of
-                    Just (MetaString chapterStr) -> do
-                        let htmlName = replaceExtension fname ".html"
+                    Just chapterMeta -> do
+                        -- Extract chapter number string from MetaValue
+                        let chapterStr = case chapterMeta of
+                                MetaString s -> s
+                                MetaInlines inlines -> stringify inlines
+                                _ -> error $ "Unexpected chapter metadata type in " ++ fullPath
+                            htmlName = replaceExtension fname ".html"
                             -- Parse chapter number from MetaValue
                             order = case reads (T.unpack chapterStr) of
                                 [(n, "")] -> n
@@ -150,7 +155,7 @@ buildChapterList = preprocess $ do
                             , chapterTitle = title
                             , chapterSections = sections
                             }
-                    _ -> return Nothing  -- Not a chapter file (e.g., FAQ)
+                    Nothing -> return Nothing  -- Not a chapter file (e.g., FAQ)
             Left err -> error $ "Failed to parse " ++ fullPath ++ ": " ++ show err
 
 -- Helper function to build chapter context with optional prev/next navigation
