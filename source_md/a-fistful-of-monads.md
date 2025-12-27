@@ -1055,7 +1055,7 @@ ghci> [ x | x <- [1..50], '7' `elem` show x ]
 
 So filtering in list comprehensions is the same as using `guard`.
 
-#### A knight's quest 
+### A knight's quest 
 
 Here's a problem that really lends itself to being solved with non-determinism.
 Say you have a chess board and only one knight piece on it.
@@ -1181,7 +1181,7 @@ It can't check if the monad laws hold for a type though, so if we're making a ne
 We can rely on the types that come with the standard library to satisfy the laws, but later when we go about making our own monads, we're going to have to manually check if the laws hold.
 But don't worry, they're not complicated.
 
-#### Left identity 
+### Left identity 
 
 The first monad law states that if we take a value, put it in a default context with `return` and then feed it to a function by using `>>=`, it's the same as just taking the value and applying the function to it.
 To put it formally:
@@ -1214,7 +1214,7 @@ ghci> (\x -> [x,x,x]) "WoM"
 We said that for `IO`, using `return` makes an I/O action that has no side-effects but just presents a value as its result.
 So it makes sense that this law holds for `IO` as well.
 
-#### Right identity 
+### Right identity 
 
 The second law states that if we have a monadic value and we use `>>=` to feed it to `return`, the result is our original monadic value.
 Formally:
@@ -1248,7 +1248,7 @@ So when we feed `[1,2,3,4]` to `return`, first `return` gets mapped over `[1,2,3
 Left identity and right identity are basically laws that describe how `return` should behave.
 It's an important function for making normal values into monadic ones and it wouldn't be good if the monadic value that it produced did a lot of other stuff.
 
-#### Associativity 
+### Associativity 
 
 The final monad law says that when we have a chain of monadic function applications with `>>=`, it shouldn't matter how they're nested.
 Formally written:

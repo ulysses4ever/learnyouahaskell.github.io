@@ -1231,7 +1231,7 @@ getCharList :: CharList -> [Char]
 It takes a `CharList` value and converts it to a `[Char]` value.
 You can think of this as wrapping and unwrapping, but you can also think of it as converting values from one type to the other.
 
-#### Using newtype to make type class instances 
+### Using newtype to make type class instances 
 
 Many times, we want to make our types instances of certain type classes, but the type parameters just don't match up for what we want to do.
 It's easy to make `Maybe` an instance of `Functor`, because the `Functor` type class is defined like this:
@@ -1299,7 +1299,7 @@ ghci> getPair $ fmap reverse (Pair ("london calling", 3))
 ("gnillac nodnol",3)
 ```
 
-#### On newtype laziness 
+### On newtype laziness 
 
 We mentioned that *newtype* is usually faster than *data*.
 The only thing that can be done with *newtype* is turning an existing type into a new type, so internally, Haskell can represent the values of types defined with *newtype* just like the original ones, only it has to keep in mind that their types are now distinct.
@@ -1378,7 +1378,7 @@ This difference in behavior may seem trivial, but it's actually pretty important
 Whereas *data* can be used to make your own types from scratch, *newtype* is for making a completely new type out of an existing type.
 Pattern matching on *newtype* values isn't like taking something out of a box (like it is with *data*), it's more about making a direct conversion from one type to another.
 
-#### `type` vs. `newtype` vs. `data` 
+### `type` vs. `newtype` vs. `data` 
 
 At this point, you may be a bit confused about what exactly the difference between *type*, *data* and *newtype* is, so let's refresh our memory a bit.
 
@@ -1540,7 +1540,7 @@ That's why when making instances, we have to make sure they follow these laws:
 The first two state that `mempty` has to act as the identity with respect to `mappend` and the third says that `mappend` has to be associative i.e. that it the order in which we use `mappend` to reduce several monoid values into one doesn't matter.
 Haskell doesn't enforce these laws, so we as the programmer have to be careful that our instances do indeed obey them.
 
-#### Lists are monoids 
+### Lists are monoids 
 
 Yes, lists are monoids!
 Like we've seen, the `++` function and the empty list `[]` form a monoid.
@@ -1599,7 +1599,7 @@ ghci> "two" `mappend` "one"
 And that's okay.
 The fact that for multiplication `3 * 5` and `5 * 3` are the same is just a property of multiplication, but it doesn't hold for all (and indeed, most) monoids.
 
-#### `Product` and `Sum` 
+### `Product` and `Sum` 
 
 We already examined one way for numbers to be considered monoids.
 Just have the binary function be `*` and the identity value `1`.
@@ -1673,7 +1673,7 @@ ghci> getSum . mconcat . map Sum $ [1,2,3]
 6
 ```
 
-#### `Any` and `All` 
+### `Any` and `All` 
 
 Another type which can act like a monoid in two distinct but equally valid ways is `Bool`.
 The first way is to have the *or* function `||` act as the binary function along with `False` as the identity value.
@@ -1742,7 +1742,7 @@ False
 Just like with multiplication and addition, we usually explicitly state the binary functions instead of wrapping them in *newtype*s and then using `mappend` and `mempty`.
 `mconcat` seems useful for `Any` and `All`, but usually it's easier to use the `or` and `and` functions, which take lists of `Bool`s and return `True` if any of them are `True` or if all of them are `True`, respectively.
 
-#### The `Ordering` monoid 
+### The `Ordering` monoid 
 
 Hey, remember the `Ordering` type?
 It's used as the result when comparing things and it can have three values: `LT`, `EQ` and `GT`, which stand for *less than*, *equal* and *greater than* respectively:
@@ -1859,7 +1859,7 @@ In the third example, they both have the same length and the same number of vowe
 
 The `Ordering` monoid is very cool because it allows us to easily compare things by many different criteria and put those criteria in an order themselves, ranging from the most important to the least.
 
-#### `Maybe` the monoid 
+### `Maybe` the monoid 
 
 Let's take a look at the various ways that `Maybe a` can be made an instance of `Monoid` and what those instances are useful for.
 
@@ -1945,7 +1945,7 @@ ghci> getLast $ Last (Just "one") `mappend` Last (Just "two")
 Just "two"
 ```
 
-#### Using monoids to fold data structures 
+### Using monoids to fold data structures 
 
 One of the more interesting ways to put monoids to work is to make them help us define folds over various data structures.
 So far, we've only done folds over lists, but lists aren't the only data structure that can be folded over.

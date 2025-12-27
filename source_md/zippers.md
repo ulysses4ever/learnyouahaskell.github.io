@@ -192,7 +192,7 @@ ghci> (freeTree, []) -: goRight -: goLeft
 (Node 'W' (Node 'C' Empty Empty) (Node 'R' Empty Empty),[L,R])
 ```
 
-#### Going back up 
+### Going back up 
 
 What if we now want to go back up in our tree?
 From our breadcrumbs we know that the current tree is the left subtree of its parent and that it is the right subtree of its parent, but that's it.
@@ -278,7 +278,7 @@ type Zipper a = (Tree a, Breadcrumbs a)
 
 I'd prefer naming the type synonym `Focus` because that makes it clearer that we're focusing on a part of a data structure, but the term zipper is more widely used to describe such a setup, so we'll stick with `Zipper`.
 
-#### Manipulating trees under focus 
+### Manipulating trees under focus 
 
 Now that we can move up and down, let's make a function that modifies the element in the root of the subtree that the zipper is focusing on:
 
@@ -340,7 +340,7 @@ ghci> let newFocus = farLeft -: attach (Node 'Z' Empty Empty)
 `newFocus` is now focused on the tree that we just attached and the rest of the tree lies inverted in the breadcrumbs.
 If we were to use `goUp` to walk all the way to the top of the tree, it would be the same tree as `freeTree` but with an additional `'Z'` on its far left.
 
-#### I'm going straight to the top, oh yeah, up where the air is fresh and clean! 
+### I'm going straight to the top, oh yeah, up where the air is fresh and clean! 
 
 Making a function that walks all the way to the top of the tree, regardless of what we're focusing on, is really easy.
 Here it is:
@@ -476,7 +476,7 @@ myDisk =
 
 That's actually what my disk contains right now.
 
-#### A zipper for our file system 
+### A zipper for our file system 
 
 ![spongedisk](assets/images/zippers/spongedisk.png){.right width=243 height=271}
 
@@ -578,7 +578,7 @@ ghci> fst newFocus2
 File "watermelon_smash.gif" "smash!!"
 ```
 
-#### Manipulating our file system 
+### Manipulating our file system 
 
 Now that we know how to navigate our file system, manipulating it is easy.
 Here's a function that renames the currently focused file or folder:
