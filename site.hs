@@ -188,7 +188,7 @@ extractTOCFromPandoc :: String -> Pandoc -> [Section]
 extractTOCFromPandoc htmlName (Pandoc _ blocks) = query getSection blocks
   where
     getSection :: Block -> [Section]
-    getSection (Header 1 (anchor, _, _) inlines) =
+    getSection (Header 2 (anchor, _, _) inlines) =
         [Section (T.unpack anchor) (T.unpack $ stringify inlines)]
     getSection _ = []
 

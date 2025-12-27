@@ -23,7 +23,7 @@ Do not despair, all is not lost.
 It turns out that Haskell actually has a really clever system for dealing with functions that have side-effects that neatly separates the part of our program that is pure and the part of our program that is impure, which does all the dirty work like talking to the keyboard and the screen.
 With those two parts separated, we can still reason about our pure program and take advantage of all the things that purity offers, like laziness, robustness and modularity while efficiently communicating with the outside world.
 
-# Hello, world! {#hello-world}
+## Hello, world! {#hello-world}
 
 ![HELLO!](assets/images/input-and-output/helloworld.png){.left width=223 height=179}
 
@@ -634,7 +634,7 @@ Don't think of a function like `putStrLn` as a function that takes a string and 
 Think of it as a function that takes a string and returns an I/O action.
 That I/O action will, when performed, print beautiful poetry to your terminal.
 
-# Files and streams {#files-and-streams}
+## Files and streams {#files-and-streams}
 
 ![streams](assets/images/input-and-output/streams.png){.right width=464 height=322}
 
@@ -1249,7 +1249,7 @@ $ cat todo.txt
 Take salad out of the oven
 ```
 
-# Command line arguments {#command-line-arguments}
+## Command line arguments {#command-line-arguments}
 
 ![COMMAND LINE ARGUMENTS!!! ARGH](assets/images/input-and-output/arguments.png){width=449 height=380 .right}
 
@@ -1497,7 +1497,7 @@ As an exercise, you can try implementing a `bump` function that will take a file
 You could make this program fail a bit more gracefully in case of bad input (for example, if someone runs `todo UP YOURS HAHAHAHA`) by making an I/O action that just reports there has been an error (say, `errorExit :: IO ()`) and then check for possible erroneous input and if there is erroneous input, perform the error reporting I/O action.
 Another way is to use exceptions, which we will meet soon.
 
-# Randomness {#randomness}
+## Randomness {#randomness}
 
 ![this picture is the ultimate source of randomness and wackiness](assets/images/input-and-output/random.png){width=358 height=362 .right}
 
@@ -1873,7 +1873,7 @@ It's very similar to the previous version, only instead of making a function tha
 After telling the user whether they were correct in their guess or not, we update the global generator and then call `main` again.
 Both approaches are valid but I like the first one more since it does less stuff in `main` and also provides us with a function that we can reuse easily.
 
-# Bytestrings {#bytestrings}
+## Bytestrings {#bytestrings}
 
 ![like normal string, only they byte ... what a pedestrian pun this is](assets/images/input-and-output/chainchomp.png){.right width=306 height=390}
 
@@ -2026,7 +2026,7 @@ Sometimes, you have to convert functions that you wrote to work on strings so th
 Whenever you need better performance in a program that reads a lot of data into strings, give bytestrings a try, chances are you'll get some good performance boosts with very little effort on your part.
 I usually write programs by using normal strings and then convert them to use bytestrings if the performance is not satisfactory.
 
-# Exceptions {#exceptions}
+## Exceptions {#exceptions}
 
 ![timberr!!!!](assets/images/input-and-output/timber.png){.left width=308 height=394}
 

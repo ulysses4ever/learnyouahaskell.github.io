@@ -3,7 +3,7 @@ chapter: 5
 title: "Recursion"
 ---
 
-# Hello recursion! {#hello-recursion}
+## Hello recursion! {#hello-recursion}
 
 ![SOVIET RUSSIA](assets/images/recursion/recursion.png){.left width=250 height=179}
 
@@ -29,7 +29,7 @@ All of a sudden, you'd be saying that *F(-2000)* is *F(-2001) + F(-2002)* and th
 Recursion is important to Haskell because unlike imperative languages, you do computations in Haskell by declaring what something *is* instead of declaring *how* you get it.
 That's why there are no while loops or for loops in Haskell and instead we many times have to use recursion to declare what something is.
 
-# Maximum awesome {#maximum-awesome}
+## Maximum awesome {#maximum-awesome}
 
 The `maximum` function takes a list of things that can be ordered (e.g. instances of the `Ord` typeclass) and returns the biggest of them.
 Think about how you'd implement that in an imperative fashion.
@@ -101,7 +101,7 @@ In essence, the maximum of a list is the max of the first element and the maximu
 
 ![max](assets/images/recursion/maxs.png){.center width=651 height=267}
 
-# A few more recursive functions {#a-few-more-recursive-functions}
+## A few more recursive functions {#a-few-more-recursive-functions}
 
 Now that we know how to generally think recursively, let's implement a few functions using recursion.
 First off, we'll implement `replicate`.
@@ -226,7 +226,7 @@ Pretty simple and expected.
 If the head isn't the element then we check the tail.
 If we reach an empty list, the result is `False`.
 
-# Quick, sort! {#quick-sort}
+## Quick, sort! {#quick-sort}
 
 We have a list of items that can be sorted.
 Their type is an instance of the `Ord` typeclass.
@@ -291,7 +291,7 @@ We chose the head because it's easy to get by pattern matching.
 The elements that are smaller than the pivot are [light green]{style=color:#0f0;font-weight:bold} and elements larger than the pivot are [dark green]{style=color:#030;font-weight:bold}.
 The yellowish gradient thing represents an application of quicksort.
 
-# Thinking recursively {#thinking-recursively}
+## Thinking recursively {#thinking-recursively}
 
 We did quite a bit of recursion so far and as you've probably noticed, there's a pattern here.
 Usually you define an edge case and then you define a function that does something between some element and the function applied to the rest.

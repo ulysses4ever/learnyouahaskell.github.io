@@ -6,7 +6,7 @@ title: "Making Our Own Types and Typeclasses"
 In the previous chapters, we covered some existing Haskell types and typeclasses.
 In this chapter, we'll learn how to make our own and how to put them to work!
 
-# Algebraic data types intro {#algebraic-data-types}
+## Algebraic data types intro {#algebraic-data-types}
 
 So far, we've run into a lot of data types.
 `Bool`, `Int`, `Char`, `Maybe`, etc.
@@ -220,7 +220,7 @@ So when we choose not to export them, we just prevent the person importing our m
 Not exporting the value constructors of a data types makes them more abstract in such a way that we hide their implementation.
 Also, whoever uses our module can't pattern match against the value constructors.
 
-# Record syntax {#record-syntax}
+## Record syntax {#record-syntax}
 
 ![record](assets/images/making-our-own-types-and-typeclasses/record.png){.right width=208 height=97}
 
@@ -347,7 +347,7 @@ Use record syntax when a constructor has several fields and it's not obvious whi
 If we make a 3D vector data type by doing `data Vector = Vector Int Int Int`, it's pretty obvious that the fields are the components of a vector.
 However, in our `Person` and `Car` types, it wasn't so obvious and we greatly benefited from using record syntax.
 
-# Type parameters {#type-parameters}
+## Type parameters {#type-parameters}
 
 A value constructor can take some values parameters and then produce a new value.
 For instance, the `Car` constructor takes three values and produces a car value.
@@ -535,7 +535,7 @@ ghci> Vector 2 9 3 `vectMult` (Vector 4 9 5 `scalarMult` Vector 9 2 4)
 Vector 148 666 222
 ```
 
-# Derived instances {#derived-instances}
+## Derived instances {#derived-instances}
 
 ![gob](assets/images/making-our-own-types-and-typeclasses/gob.png){.right width=112 height=350}
 
@@ -757,7 +757,7 @@ ghci> [minBound .. maxBound] :: [Day]
 
 That's pretty awesome.
 
-# Type synonyms {#type-synonyms}
+## Type synonyms {#type-synonyms}
 
 Previously, we mentioned that when writing types, the `[Char]` and `String` types are equivalent and interchangeable.
 That's implemented with **type synonyms**.
@@ -974,7 +974,7 @@ Right "QOTSA"
 We could have used a `Maybe a` to represent the result but then we wouldn't know why we couldn't get the code.
 But now, we have information about the failure in our result type.
 
-# Recursive data structures {#recursive-data-structures}
+## Recursive data structures {#recursive-data-structures}
 
 ![the fonz](assets/images/making-our-own-types-and-typeclasses/thefonz.png){.right width=168 height=301}
 
@@ -1211,7 +1211,7 @@ Cool.
 So as you can see, algebraic data structures are a really cool and powerful concept in Haskell.
 We can use them to make anything from boolean values and weekday enumerations to binary search trees and more!
 
-# Typeclasses 102 {#typeclasses-102}
+## Typeclasses 102 {#typeclasses-102}
 
 ![tweet](assets/images/making-our-own-types-and-typeclasses/trafficlight.png){.right width=175 height=480}
 
@@ -1425,7 +1425,7 @@ If you do `:info Maybe`, it will show you all the typeclasses that `Maybe` is an
 Also `:info` can show you the type declaration of a function.
 I think that's pretty cool.
 
-# A yes-no typeclass {#a-yes-no-typeclass}
+## A yes-no typeclass {#a-yes-no-typeclass}
 
 ![yesno](assets/images/making-our-own-types-and-typeclasses/yesno.png){.left width=201 height=111}
 
@@ -1560,7 +1560,7 @@ ghci> yesnoIf Nothing "YEAH!" "NO!"
 "NO!"
 ```
 
-# The Functor typeclass {#the-functor-typeclass}
+## The Functor typeclass {#the-functor-typeclass}
 
 So far, we've encountered a lot of the typeclasses in the standard library.
 We've played with `Ord`, which is for stuff that can be ordered.
@@ -1734,7 +1734,7 @@ For example, if we gave the wrong functor instance to our `Tree` type, using `fm
 We'll go over the functor laws in more detail in one of the next chapters.
 :::
 
-# Kinds and some type-foo {#kinds-and-some-type-foo}
+## Kinds and some type-foo {#kinds-and-some-type-foo}
 
 ![TYPE FOO MASTER](assets/images/making-our-own-types-and-typeclasses/typefoo.png){.right width=287 height=400}
 

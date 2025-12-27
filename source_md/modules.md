@@ -3,7 +3,7 @@ chapter: 7
 title: "Modules"
 ---
 
-# Loading modules {#loading-modules}
+## Loading modules {#loading-modules}
 
 ![modules](assets/images/modules/modules.png){.right width=230 height=162}
 
@@ -94,7 +94,7 @@ Reading the source code of some modules is a really good way to learn Haskell an
 To search for functions or to find out where they're located, use [Hoogle](https://hoogle.haskell.org/).
 It's a really awesome Haskell search engine, you can search by name, module name or even type signature.
 
-# Data.List {#data-list}
+## Data.List {#data-list}
 
 The `Data.List` module is all about lists, obviously.
 It provides some very useful functions for dealing with them.
@@ -651,7 +651,7 @@ Awesome!
 If you're not sure how exactly the `on` works here, ``compare `on` length`` is the equivalent of ``\x y -> length x `compare` length y``.
 When you're dealing with *By* functions that take an equality function, you usually do ``(==) `on` something`` and when you're dealing with *By* functions that take an ordering function, you usually do ``compare `on` something``.
 
-# Data.Char {#data-char}
+## Data.Char {#data-char}
 
 ![lego char](assets/images/modules/legochar.png){.right width=230 height=323}
 
@@ -855,7 +855,7 @@ ghci> decode 5 . encode 5 $ "This is a sentence"
 "This is a sentence"
 ```
 
-# Data.Map {#data-map}
+## Data.Map {#data-map}
 
 Association lists (also called dictionaries) are lists that are used to store key-value pairs where ordering doesn't matter.
 For instance, we might use an association list to store phone numbers, where phone numbers would be the values and people's names would be the keys.
@@ -1138,7 +1138,7 @@ fromList [(3,104),(5,103),(6,339)]
 These were just a few functions from `Data.Map`.
 You can see a complete list of functions in the [documentation](https://hackage.haskell.org/package/containers/docs/Data-Map.html).
 
-# Data.Set {#data-set}
+## Data.Set {#data-set}
 
 ![legosets](assets/images/modules/legosets.png){.right width=150 height=236}
 
@@ -1261,7 +1261,7 @@ ghci> nub "HEY WHATS CRACKALACKIN"
 
 `setNub` is generally faster than `nub` on big lists but as you can see, `nub` preserves the ordering of the list's elements, while `setNub` does not.
 
-# Making our own modules {#making-our-own-modules}
+## Making our own modules {#making-our-own-modules}
 
 ![making modules](assets/images/modules/making_modules.png){.right width=345 height=224}
 
