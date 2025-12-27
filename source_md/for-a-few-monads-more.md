@@ -21,7 +21,7 @@ The `mtl` package comes with the Haskell Platform, so you probably already have 
 To check if you do, type `ghc-pkg list` in the command-line.
 This will show which Haskell packages you have installed and one of them should be `mtl`, followed by a version number.
 
-# Writer? I hardly know her! {#writer}
+## Writer? I hardly know her! {#writer}
 
 We've loaded our gun with the `Maybe` monad, the list monad and the `IO` monad.
 Now let's put the `Writer` monad in the chamber and see what happens when we fire it!
@@ -108,7 +108,7 @@ ghci> ("Bathcat","Got outlaw name.") `applyLog` (\x -> (length x, "Applied lengt
 
 See how inside the lambda, `x` is just a normal string and not a tuple and how `applyLog` takes care of appending the logs.
 
-### Monoids to the rescue 
+#### Monoids to the rescue 
 
 ::: {.hintbox}
 Be sure you know what [monoids](functors-applicative-functors-and-monoids.html#monoids) are at this point!
@@ -207,7 +207,7 @@ ghci> ("dogmeat", Sum 5) `applyLog` addDrink `applyLog` addDrink
 Adding a drink to some dog meat results in a beer and an additional `30` cents, so `("beer", Sum 35)`.
 And if we use `applyLog` to feed that to `addDrink`, we get another beer and the result is `("beer", Sum 65)`.
 
-### The Writer type 
+#### The Writer type 
 
 Now that we've seen that a value with an attached monoid acts like a monadic value, let's examine the `Monad` instance for types of such values.
 The `Control.Monad.Writer` module exports the `Writer w a` type along with its `Monad` instance and some useful functions for dealing with values of this type.
@@ -266,7 +266,7 @@ For `Product`, the identity is `1`.
 
 The `Writer` instance doesn't feature an implementation for `fail`, so if a pattern match fails in `do` notation, `error` is called.
 
-### Using do notation with Writer 
+#### Using do notation with Writer 
 
 Now that we have a `Monad` instance, we're free to use `do` notation for `Writer` values.
 It's handy for when we have a several `Writer` values and we want to do stuff with them.
@@ -325,7 +325,7 @@ ghci> runWriter multWithLog
 (15,["Got number: 3","Got number: 5","Gonna multiply these two"])
 ```
 
-### Adding logging to programs 
+#### Adding logging to programs 
 
 Euclid's algorithm is an algorithm that takes two numbers and computes their greatest common divisor.
 That is, the biggest number that still divides both of them.
@@ -425,7 +425,7 @@ I think it's awesome how we were able to change our ordinary algorithm to one th
 We can add a logging mechanism to pretty much any function.
 We just replace normal values with `Writer` values where we want and change normal function application to `>>=` (or `do` expressions if it increases readability).
 
-### Inefficient list construction 
+#### Inefficient list construction 
 
 When using the `Writer` monad, you have to be careful which monoid to use, because using lists can sometimes turn out to be very slow.
 That's because lists use `++` for `mappend` and using `++` to add something to the end of a list is slow if that list is really long.
@@ -478,7 +478,7 @@ Finished with 1
 
 It's inefficient because it ends up associating the use of `++` to the left instead of to the right.
 
-### Difference lists 
+#### Difference lists 
 
 ![cactuses](assets/images/for-a-few-monads-more/cactus.png){.left width=147 height=300}
 
@@ -572,7 +572,7 @@ Finished with 2
 
 We do `gcdReverse 110 34`, then use `runWriter` to unwrap it from the `newtype`, then apply `snd` to that to just get the log, then apply `fromDiffList` to convert it to a normal list and then finally print its entries to the screen.
 
-### Comparing Performance 
+#### Comparing Performance 
 
 To get a feel for just how much difference lists may improve your performance, consider this function that just counts down from some number to zero, but produces its log in reverse, like `gcdReverse`, so that the numbers in the log will actually be counted up:
 
@@ -623,7 +623,7 @@ Of course, this is not the proper and scientific way to test how fast our progra
 Oh, by the way, the song Final Countdown by Europe is now stuck in your head.
 Enjoy!
 
-# Reader? Ugh, not this joke again. {#reader}
+## Reader? Ugh, not this joke again. {#reader}
 
 ![bang youre dead](assets/images/for-a-few-monads-more/revolver.png){.left width=280 height=106}
 
@@ -725,7 +725,7 @@ We can act as if we already know what the functions will return.
 It does this by gluing functions together into one function and then giving that function's parameter to all of the functions that it was glued from.
 So if we have a lot of functions that are all just missing one parameter and they'd eventually be applied to the same thing, we can use the reader monad to sort of extract their future results and the `>>=` implementation will make sure that it all works out.
 
-# Tasteful stateful computations {#state}
+## Tasteful stateful computations {#state}
 
 ![don't jest with texas](assets/images/for-a-few-monads-more/texas.png){.left width=244 height=230}
 
@@ -776,7 +776,7 @@ If you look at that functionally, you could look at it as a function that takes 
 This stateful computation, a function that takes a state and returns a result and a new state, can be thought of as a value with a context as well.
 The actual value is the result, whereas the context is that we have to provide some initial state to actually get that result and that apart from getting a result we also get a new state.
 
-### Stacks and stones 
+#### Stacks and stones 
 
 Say we want to model operating a stack.
 You have a stack of things one on top of another and you can either push stuff on top of that stack or you can take stuff off the top of the stack.
@@ -846,7 +846,7 @@ stackManip = do
 Well, using the state monad will allow us to do exactly this.
 With it, we will be able to take stateful computations like these and use them without having to manage the state manually.
 
-### The State monad 
+#### The State monad 
 
 The `Control.Monad.State` module provides a `newtype` that wraps stateful computations.
 Here's its definition:
@@ -1017,7 +1017,7 @@ It makes sense that the monad itself, `Maybe`, doesn't change.
 It wouldn't make sense to use `>>=` between two different monads.
 Well, for the state monad, the monad is actually `State s`, so if that `s` was different, we'd be using `>>=` between two different monads.
 
-### Randomness and the state monad 
+#### Randomness and the state monad 
 
 At the beginning of this section, we saw how generating numbers can sometimes be awkward because every random function takes a generator and returns a random number along with a new generator, which must then be used instead of the old one if we want to generate another random number.
 The state monad makes dealing with this a lot easier.
@@ -1065,7 +1065,7 @@ ghci> runState threeCoins (mkStdGen 33)
 Nice.
 Doing these sort of things that require some state to be kept in between steps just became much less of a hassle!
 
-# Error error on the wall {#error}
+## Error error on the wall {#error}
 
 We know by now that `Maybe` is used to add a context of possible failure to values.
 A value can be a `Just something` or a `Nothing`.
@@ -1158,14 +1158,14 @@ Other than this little hangup, using this monad is very similar to using `Maybe`
 In the previous chapter, we used the monadic aspects of `Maybe` to simulate birds landing on the balancing pole of a tightrope walker.
 As an exercise, you can rewrite that with the error monad so that when the tightrope walker slips and falls, we remember how many birds were on each side of the pole when he fell.
 
-# Some useful monadic functions {#useful-monadic-functions}
+## Some useful monadic functions {#useful-monadic-functions}
 
 In this section, we're going to explore a few functions that either operate on monadic values or return monadic values as their results (or both!).
 Such functions are usually referred to as monadic functions.
 While some of them will be brand new, others will be monadic counterparts of functions that we already know, like `filter` and `foldl`.
 Let's see what they are then!
 
-### liftM and friends 
+#### liftM and friends 
 
 ![im a cop too](assets/images/for-a-few-monads-more/wolf.png){.right width=394 height=222}
 
@@ -1304,7 +1304,7 @@ There also exist `liftM3` and `liftM4` and `liftM5`.
 
 We saw how monads are stronger than applicatives and functors and how even though all monads are functors and applicative functors, they don't necessarily have `Functor` and `Applicative` instances, so we examined the monadic equivalents of the functions that functors and applicative functors use.
 
-### The join function 
+#### The join function 
 
 Here's some food for thought: if the result of one monadic value is another monadic value i.e. if one monadic value is nested inside the other, can you flatten them to just a single normal monadic value?
 Like, if we have `Just (Just 9)`, can we make that into `Just 9`?
@@ -1407,7 +1407,7 @@ If we map this function over `Just 9`, we're left with `Just (Just 10)`.
 
 The fact that `m >>= f` always equals `join (fmap f m)` is very useful if we're making our own `Monad` instance for some type because it's often easier to figure out how we would flatten a nested monadic value than figuring out how to implement `>>=`.
 
-### filterM 
+#### filterM 
 
 The `filter` function is pretty much the bread of Haskell programming (`map` being the butter).
 It takes a predicate and a list to filter out and then returns a new list where only the elements that satisfy the predicate are kept.
@@ -1531,7 +1531,7 @@ ghci> powerset [1,2,3]
 
 This takes a bit of thinking to wrap your head around, but if you just consider lists as non-deterministic values that don't know what to be so they just decide to be everything at once, it's a bit easier.
 
-### foldM 
+#### foldM 
 
 The monadic counterpart to `foldl` is `foldM`.
 If you remember your folds from the [folds section](../higher-order-functions.html#folds), you know that `foldl` takes a binary function, a starting accumulator and a list to fold up and then folds it from the left into a single value by using the binary function.
@@ -1586,7 +1586,7 @@ Excellent!
 Because one number in the list was greater than `9`, the whole thing resulted in a `Nothing`.
 Folding with a binary function that returns a `Writer` value is cool as well because then you log whatever you want as your fold goes along its way.
 
-### Making a safe RPN calculator 
+#### Making a safe RPN calculator 
 
 ![i've found yellow!](assets/images/for-a-few-monads-more/miner.png){.left width=280 height=396}
 
@@ -1717,7 +1717,7 @@ Nothing
 The first failure happens because the final stack isn't a list with one element in it and so the pattern matching in the `do` expression fails.
 The second failure happens because `readMaybe` returns a `Nothing`.
 
-### Composing monadic functions 
+#### Composing monadic functions 
 
 When we were learning about the monad laws, we said that the `<=<` function is just like composition, only instead of working for normal functions like `a -> b`, it works for monadic functions like `a -> m b`.
 For instance:
@@ -1784,7 +1784,7 @@ canReachIn :: Int -> KnightPos -> KnightPos -> Bool
 canReachIn x start end = end `elem` inMany x start
 ```
 
-# Making monads {#making-monads}
+## Making monads {#making-monads}
 
 ![kewl](assets/images/for-a-few-monads-more/spearhead.png){.center width=780 height=244}
 

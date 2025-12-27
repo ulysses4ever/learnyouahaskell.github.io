@@ -74,7 +74,7 @@ The `>>=` function is pronounced as *bind*.
 When we have a normal value `a` and a normal function `a -> b` it's really easy to feed the value to the function --- you just apply the function to the value normally and that's it.
 But when we're dealing with values that come with certain contexts, it takes a bit of thinking to see how these fancy values are fed to functions and how to take into account their behavior, but you'll see that it's easy as one two three.
 
-# Getting our feet wet with Maybe {#getting-our-feet-wet-with-maybe}
+## Getting our feet wet with Maybe {#getting-our-feet-wet-with-maybe}
 
 ![monads, grasshoppa](assets/images/a-fistful-of-monads/buddha.png){.left width=302 height=387}
 
@@ -201,7 +201,7 @@ We'll see that monads can do that as well because they're an upgrade of applicat
 
 We'll come back to `Maybe` in a minute, but first, let's check out the type class that belongs to monads.
 
-# The Monad type class {#the-monad-type-class}
+## The Monad type class {#the-monad-type-class}
 
 Just like functors have the `Functor` type class and applicative functors have the `Applicative` type class, monads come with their own type class: `Monad`!
 Wow, who would have thought?
@@ -292,7 +292,7 @@ Notice how when we fed `Just 9` to the function `\x -> return (x*10)`, the `x` t
 It seems as though we were able to extract the value from a `Maybe` without pattern-matching.
 And we still didn't lose the context of our `Maybe` value, because when it's `Nothing`, the result of using `>>=` will be `Nothing` as well.
 
-# Walk the line {#walk-the-line}
+## Walk the line {#walk-the-line}
 
 ![pierre](assets/images/a-fistful-of-monads/pierre.png){.left width=374 height=405}
 
@@ -589,7 +589,7 @@ In this section, we took some functions that we had and saw that they would work
 By turning those values into `Maybe` values and replacing normal function application with `>>=`, we got a mechanism for handling failure pretty much for free, because `>>=` is supposed to preserve the context of the value to which it applies functions.
 In this case, the context was that our values were values with failure and so when we applied functions to such values, the possibility of failure was always taken into account.
 
-# do notation {#do-notation}
+## do notation {#do-notation}
 
 Monads in Haskell are so useful that they got their own special syntax called `do` notation.
 We've already encountered `do` notation when we were doing I/O and there we said that it was for gluing together several I/O actions into one.
@@ -819,7 +819,7 @@ Nothing
 
 The failed pattern matching has caused a failure within the context of our monad instead of causing a program-wide failure, which is pretty neat.
 
-# The list monad {#the-list-monad}
+## The list monad {#the-list-monad}
 
 ![dead cat](assets/images/a-fistful-of-monads/deadcat.png){.left width=235 height=230}
 
@@ -1055,7 +1055,7 @@ ghci> [ x | x <- [1..50], '7' `elem` show x ]
 
 So filtering in list comprehensions is the same as using `guard`.
 
-### A knight's quest 
+#### A knight's quest 
 
 Here's a problem that really lends itself to being solved with non-determinism.
 Say you have a chess board and only one knight piece on it.
@@ -1166,7 +1166,7 @@ No!
 As an exercise, you can change this function so that when you can reach one position from the other, it tells you which moves to take.
 Later on, we'll see how to modify this function so that we also pass it the number of moves to take instead of that number being hardcoded like it is now.
 
-# Monad laws {#monad-laws}
+## Monad laws {#monad-laws}
 
 ![the court finds you guilty of peeing all over
 everything](assets/images/a-fistful-of-monads/judgedog.png){.right width=343 height=170}
@@ -1181,7 +1181,7 @@ It can't check if the monad laws hold for a type though, so if we're making a ne
 We can rely on the types that come with the standard library to satisfy the laws, but later when we go about making our own monads, we're going to have to manually check if the laws hold.
 But don't worry, they're not complicated.
 
-### Left identity 
+#### Left identity 
 
 The first monad law states that if we take a value, put it in a default context with `return` and then feed it to a function by using `>>=`, it's the same as just taking the value and applying the function to it.
 To put it formally:
@@ -1214,7 +1214,7 @@ ghci> (\x -> [x,x,x]) "WoM"
 We said that for `IO`, using `return` makes an I/O action that has no side-effects but just presents a value as its result.
 So it makes sense that this law holds for `IO` as well.
 
-### Right identity 
+#### Right identity 
 
 The second law states that if we have a monadic value and we use `>>=` to feed it to `return`, the result is our original monadic value.
 Formally:
@@ -1248,7 +1248,7 @@ So when we feed `[1,2,3,4]` to `return`, first `return` gets mapped over `[1,2,3
 Left identity and right identity are basically laws that describe how `return` should behave.
 It's an important function for making normal values into monadic ones and it wouldn't be good if the monadic value that it produced did a lot of other stuff.
 
-### Associativity 
+#### Associativity 
 
 The final monad law says that when we have a chain of monadic function applications with `>>=`, it shouldn't matter how they're nested.
 Formally written:

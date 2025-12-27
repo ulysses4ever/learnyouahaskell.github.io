@@ -3,7 +3,7 @@ chapter: 4
 title: "Syntax in Functions"
 ---
 
-# Pattern matching {#pattern-matching}
+## Pattern matching {#pattern-matching}
 
 ![four!](assets/images/syntax-in-functions/pattern.png){.right width=162 height=250}
 
@@ -258,7 +258,7 @@ If you tried to pattern match against `(xs ++ ys)`, what would be in the first a
 It doesn't make much sense.
 It would make sense to match stuff against `(xs ++ [x,y,z])` or just `(xs ++ [x])`, but because of the nature of lists, you can't do that.
 
-# Guards, guards! {#guards-guards}
+## Guards, guards! {#guards-guards}
 
 ![guards](assets/images/syntax-in-functions/guards.png){.left width=83 height=180}
 
@@ -388,7 +388,7 @@ The full syntax of guards is a series of either boolean expressions or patterns 
 Pattern guards were not included in the first stable version of Haskell (called **Haskell98**) but were added to the next (called **Haskell2010**).
 :::
 
-# Where!? {#where}
+## Where!? {#where}
 
 In the previous section, we defined a density calculator function and responder like this:
 
@@ -475,7 +475,7 @@ We have to examine the list passed to the function and there's a different densi
 *where* bindings can also be nested.
 It's a common idiom to make a function and define some helper function in its *where* clause and then to give those functions helper functions as well, each with its own *where* clause.
 
-# Let it be {#let-it-be}
+## Let it be {#let-it-be}
 
 Very similar to where bindings are let bindings.
 Where bindings are a syntactic construct that let you bind to variables at the end of a function and the whole function can see them, including all the guards.
@@ -582,7 +582,7 @@ Well, since *let* bindings are expressions and are fairly local in their scope, 
 Some people prefer *where* bindings because the names come after the function they're being used in.
 That way, the function body is closer to its name and type declaration and to some that's more readable.
 
-# Case expressions {#case-expressions}
+## Case expressions {#case-expressions}
 
 ![case](assets/images/syntax-in-functions/case.png){.right width=185 height=164}
 

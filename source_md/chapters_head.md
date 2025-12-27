@@ -1,2 +1,2 @@
-# Learn You a Haskell for Great Good! 
+## Learn You a Haskell for Great Good! 
 
