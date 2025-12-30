@@ -17,5 +17,5 @@ executable site
                   , containers
                   , text
                   , directory
-  ghc-options:      -threaded
+  ghc-options:      -threaded -Wall -Werror
   default-language: Haskell2010
